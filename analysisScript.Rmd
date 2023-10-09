@@ -28,6 +28,8 @@ wd <- file.path(getwd(), "data")
 
 ## Meio, August 2017 - First monitoring campaign
 
+First, we prepare a mask of the island so the analysis occurs only on the island area.
+
 ```{r mask, echo = TRUE, include = FALSE}
 PARNA <- terra::vect(file.path(wd, "Geomorfology.shp")) 
 meio <- subset(PARNA, PARNA$AREA_HA == 17.034712, )
@@ -37,14 +39,9 @@ plot(meio, col = "lightblue")
 plot(trapPointsOK, add = TRUE, col = "red")
 ```
 
-Now we have a mask to use and we have made sure the traps are located correctly in the shapefile
+Now we have a mask to use. Before we actually use it, we want to make sure the traps are located correctly in the shapefile.
 
-```{r aug17, echo = TRUE, include = FALSE}
-aug17 <- secr::read.capthist(captfile =  file.path(wd, "CAPTURE1.txt"),
-                               trapfile = file.path(wd, "TRAPS1.txt"), 
-                             covnames="Sex", 
-                             trapcovnames = "Landscape")
-
+```{r testMask, echo = TRUE, eval=FALSE}
 clippedmask <- make.mask(trapPoints, type = 'trapbuffer', 
                          buffer = 200, poly = meio)
 par(mfrow = c(1,1), mar = c(1,1,1,1))
@@ -53,14 +50,18 @@ gm <- as.data.frame(geom(meio))
 polygon(data.frame(x = gm$x, y = gm$y), col = 'lightgreen', border = NA)
 plot(clippedmask, dots = FALSE, mesh = grey(0.4), col = NA, polycol = 'blue', add = TRUE)
 plot(trapPoints, detpar = list(pch = 16, cex = 0.8), add = TRUE)
+```
+
+Everything seems to be fine. Now we can perform our analysis.
+
+```{r aug17, echo = TRUE, include = FALSE}
+
+aug17 <- secr::read.capthist(captfile =  file.path(wd, "CAPTURE1.txt"),
+                               trapfile = file.path(wd, "TRAPS1.txt"), 
+                             covnames="Sex", 
+                             trapcovnames = "Landscape")
 
 summary(aug17)
-
-# g0.1 <- secr.fit(aug17, model = list(g0 ~ 1, sigma ~ 1), CL = TRUE,
-#                  verify = TRUE)
-# 
-# g0.2 <- secr.fit(aug17, model = list(g0 ~ 1, sigma ~ 1), CL = TRUE,
-#                  verify = TRUE, buffer = 200)
 
 g0.3 <- secr.fit(aug17, model = list(g0 ~ 1, sigma ~ 1), CL = TRUE,
                  verify = TRUE, mask = clippedmask)
