@@ -33,6 +33,8 @@ First, we prepare a mask of the island so the analysis occurs only on the island
 ```{r mask, echo = TRUE, include = FALSE}
 PARNA <- terra::vect(file.path(wd, "Geomorfology.shp")) 
 meio <- subset(PARNA, PARNA$AREA_HA == 17.034712, )
+aug17 <- secr::read.capthist(captfile =  file.path(wd, "CAPTURE1.txt"),
+                               trapfile = file.path(wd, "TRAPS1.txt"))
 trapPoints <- traps(aug17)
 trapPointsOK <- vect(as.data.frame(trapPoints), geom=c("x", "y"), crs=crs(meio), keepgeom=FALSE)
 plot(meio, col = "lightblue")
@@ -57,53 +59,18 @@ Everything seems to be fine. Now we can perform our analysis.
 ```{r aug17, echo = TRUE, include = FALSE}
 
 aug17 <- secr::read.capthist(captfile =  file.path(wd, "CAPTURE1.txt"),
-                               trapfile = file.path(wd, "TRAPS1.txt"), 
-                             covnames="Sex", 
-                             trapcovnames = "Landscape")
-
+                               trapfile = file.path(wd, "TRAPS1.txt")) # We have already read the file before so we could extract the trap's information. Here it is again for consistency.
 summary(aug17)
 
-g0.3 <- secr.fit(aug17, model = list(g0 ~ 1, sigma ~ 1), CL = TRUE,
+g0.1 <- secr.fit(aug17, model = list(g0 ~ 1, sigma ~ 1), CL = TRUE,
                  verify = TRUE, mask = clippedmask)
-# Using buffer of 200m or clippedmask (island shapefile) or both resulted in the exact same results and AIC 
-# Will use the clippedmask, which is the correct way.
 
-# g0.4 <- secr.fit(aug17, model = list(g0 ~ 1, sigma ~ 1), CL = TRUE,
-#                  verify = TRUE, buffer = 200, mask = clippedmask)
-
-# g0.2 <- secr.fit(aug17, model = list(g0 ~ 1, sigma ~ 1), CL = TRUE,
-#                  verify = TRUE, buffer = 200)
-
-# g0.2 <- secr.fit(aug17, model = list(g0 ~ Landscape, sigma ~ 1), CL = TRUE,
-#                  verify = TRUE, buffer = 200)
-# g0.3 <- secr.fit(aug17, model = list(g0 ~ 1, sigma ~ Landscape), CL = TRUE,
-#                  verify = TRUE, buffer = 200)
-# g0.4 <- secr.fit(aug17, model = list(g0 ~ Landscape, sigma ~ Landscape), CL = TRUE,
-#                  verify = TRUE, buffer = 200)
-
-densityAUG171 <- derived(g0.1)
-densityAUG172 <- derived(g0.2)
-densityAUG173 <- derived(g0.3)
-densityAUG174 <- derived(g0.4)
-# densityAUG172 <- derived(g0.2)
-# densityAUG173 <- derived(g0.3)
-# densityAUG174 <- derived(g0.4)
-
-densityAUG171
-densityAUG172
-densityAUG173
-densityAUG174
-# densityAUG172
-# densityAUG173
-# densityAUG174
-
-AICcomp <- AIC(g0.1, g0.2, g0.3, g0.4)
-AICcomp
+densityAUG17 <- derived(g0.1)
+densityAUG17
 ```
 
-We tested different model formulations (i.e., landscape covariates and also different buffers).  
-Model diagnostics (i.e., AIC) supported the use of the simplest model, and a buffer of 200m. Applying 
-the mask didn't change the results.
+We tested different model formulations (i.e., landscape covariates and also different buffers; see previous commits to see code).  
+Model diagnostics (i.e., AIC) supported the use of the simplest model (i.e., detection probability doesn't change), and the island shapefile as a mask. Applying the mask or buffer of 200 didn't change the results, but other buffers did.
 
 Home range results (sigma estimate, lcl = lowe95%CI; ucl = upper95%CI):
 ```{r, echo = FALSE}
@@ -120,12 +87,11 @@ knitr::kable(densityAUG17)
 ```{r oct17, echo = TRUE, include = FALSE}
 oct17 <- secr::read.capthist(captfile =  file.path(wd, "CAPTURE2.txt"),
                                trapfile = file.path(wd, "TRAPS2.txt"))
-
 summary(oct17)
 g0.2 <- secr.fit(oct17, model = list(g0 ~ 1, sigma ~ 1), CL = TRUE,
-                 verify = TRUE, buffer = 200)
-densityOCT17 <- derived(g0.2)
+                 verify = TRUE, mask = clippedmask)
 
+densityOCT17 <- derived(g0.2)
 densityOCT17
 ```
 
@@ -138,3 +104,4 @@ Density results (D estimate, lcl = lowe95%CI; ucl = upper95%CI):
 ```{r, echo = FALSE}
 knitr::kable(densityOCT17)
 ```
+
