@@ -1,0 +1,139 @@
+---
+title: "Rats Ilha do Meio"
+author: "Tati Micheletti / Instituto Brasileiro para Medicina da Conservacao"
+date: "09 October 2023"
+output: pdf_document
+---
+
+```{r setup, echo = FALSE, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries
+
+```{r libs, echo = TRUE, include = FALSE}
+if(!require("Require")){
+    install.packages("Require")
+}
+library("Require")
+Require("googledrive")
+Require("reproducible")
+Require("data.table") # If any packages were installed here, restart your session and re-run the code!
+Require("secr")
+Require("terra")
+# Set your working directory
+wd <- file.path(getwd(), "data")
+
+```
+
+## Meio, August 2017 - First monitoring campaign
+
+```{r mask, echo = TRUE, include = FALSE}
+PARNA <- terra::vect(file.path(wd, "Geomorfology.shp")) 
+meio <- subset(PARNA, PARNA$AREA_HA == 17.034712, )
+trapPoints <- traps(aug17)
+trapPointsOK <- vect(as.data.frame(trapPoints), geom=c("x", "y"), crs=crs(meio), keepgeom=FALSE)
+plot(meio, col = "lightblue")
+plot(trapPointsOK, add = TRUE, col = "red")
+```
+
+Now we have a mask to use and we have made sure the traps are located correctly in the shapefile
+
+```{r aug17, echo = TRUE, include = FALSE}
+aug17 <- secr::read.capthist(captfile =  file.path(wd, "CAPTURE1.txt"),
+                               trapfile = file.path(wd, "TRAPS1.txt"), 
+                             covnames="Sex", 
+                             trapcovnames = "Landscape")
+
+clippedmask <- make.mask(trapPoints, type = 'trapbuffer', 
+                         buffer = 200, poly = meio)
+par(mfrow = c(1,1), mar = c(1,1,1,1))
+plot(clippedmask, border = 100, ppoly = FALSE)
+gm <- as.data.frame(geom(meio))
+polygon(data.frame(x = gm$x, y = gm$y), col = 'lightgreen', border = NA)
+plot(clippedmask, dots = FALSE, mesh = grey(0.4), col = NA, polycol = 'blue', add = TRUE)
+plot(trapPoints, detpar = list(pch = 16, cex = 0.8), add = TRUE)
+
+summary(aug17)
+
+# g0.1 <- secr.fit(aug17, model = list(g0 ~ 1, sigma ~ 1), CL = TRUE,
+#                  verify = TRUE)
+# 
+# g0.2 <- secr.fit(aug17, model = list(g0 ~ 1, sigma ~ 1), CL = TRUE,
+#                  verify = TRUE, buffer = 200)
+
+g0.3 <- secr.fit(aug17, model = list(g0 ~ 1, sigma ~ 1), CL = TRUE,
+                 verify = TRUE, mask = clippedmask)
+# Using buffer of 200m or clippedmask (island shapefile) or both resulted in the exact same results and AIC 
+# Will use the clippedmask, which is the correct way.
+
+# g0.4 <- secr.fit(aug17, model = list(g0 ~ 1, sigma ~ 1), CL = TRUE,
+#                  verify = TRUE, buffer = 200, mask = clippedmask)
+
+# g0.2 <- secr.fit(aug17, model = list(g0 ~ 1, sigma ~ 1), CL = TRUE,
+#                  verify = TRUE, buffer = 200)
+
+# g0.2 <- secr.fit(aug17, model = list(g0 ~ Landscape, sigma ~ 1), CL = TRUE,
+#                  verify = TRUE, buffer = 200)
+# g0.3 <- secr.fit(aug17, model = list(g0 ~ 1, sigma ~ Landscape), CL = TRUE,
+#                  verify = TRUE, buffer = 200)
+# g0.4 <- secr.fit(aug17, model = list(g0 ~ Landscape, sigma ~ Landscape), CL = TRUE,
+#                  verify = TRUE, buffer = 200)
+
+densityAUG171 <- derived(g0.1)
+densityAUG172 <- derived(g0.2)
+densityAUG173 <- derived(g0.3)
+densityAUG174 <- derived(g0.4)
+# densityAUG172 <- derived(g0.2)
+# densityAUG173 <- derived(g0.3)
+# densityAUG174 <- derived(g0.4)
+
+densityAUG171
+densityAUG172
+densityAUG173
+densityAUG174
+# densityAUG172
+# densityAUG173
+# densityAUG174
+
+AICcomp <- AIC(g0.1, g0.2, g0.3, g0.4)
+AICcomp
+```
+
+We tested different model formulations (i.e., landscape covariates and also different buffers).  
+Model diagnostics (i.e., AIC) supported the use of the simplest model, and a buffer of 200m. Applying 
+the mask didn't change the results.
+
+Home range results (sigma estimate, lcl = lowe95%CI; ucl = upper95%CI):
+```{r, echo = FALSE}
+knitr::kable(summary(g0.1)$predicted)
+```
+
+Density results (D estimate, lcl = lowe95%CI; ucl = upper95%CI):
+```{r, echo = FALSE}
+knitr::kable(densityAUG17)
+```
+
+## Meio, October 2017 - Second monitoring campaign
+
+```{r oct17, echo = TRUE, include = FALSE}
+oct17 <- secr::read.capthist(captfile =  file.path(wd, "CAPTURE2.txt"),
+                               trapfile = file.path(wd, "TRAPS2.txt"))
+
+summary(oct17)
+g0.2 <- secr.fit(oct17, model = list(g0 ~ 1, sigma ~ 1), CL = TRUE,
+                 verify = TRUE, buffer = 200)
+densityOCT17 <- derived(g0.2)
+
+densityOCT17
+```
+
+Home range results (sigma estimate, lcl = lowe95%CI; ucl = upper95%CI):
+```{r, echo = FALSE}
+knitr::kable(summary(g0.2)$predicted)
+```
+
+Density results (D estimate, lcl = lowe95%CI; ucl = upper95%CI):
+```{r, echo = FALSE}
+knitr::kable(densityOCT17)
+```
