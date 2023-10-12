@@ -95,6 +95,18 @@ densityOCT17 <- derived(g0.2)
 densityOCT17
 ```
 
+Double checking where the traps are located  
+
+```{r testMask2, echo = TRUE, eval=FALSE}
+trapPoints <- traps(oct17)
+par(mfrow = c(1,1), mar = c(1,1,1,1))
+plot(clippedmask, border = 100, ppoly = FALSE)
+gm <- as.data.frame(geom(meio))
+polygon(data.frame(x = gm$x, y = gm$y), col = 'lightgreen', border = NA)
+plot(clippedmask, dots = FALSE, mesh = grey(0.4), col = NA, polycol = 'blue', add = TRUE)
+plot(trapPoints, detpar = list(pch = 16, cex = 0.8), add = TRUE)
+```
+
 Home range results (sigma estimate, lcl = lowe95%CI; ucl = upper95%CI):
 ```{r, echo = FALSE}
 knitr::kable(summary(g0.2)$predicted)
