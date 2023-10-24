@@ -1,0 +1,19 @@
+Time,parameter,     Estimate, Standard Error of Estimate,Lower Confidence Limit (LCL),Upper Confidence Limit (UCL),       Coefficient of Variation for Population Density (CVn),       Coefficient of Variation of individual detection (Cva),        Coefficient of Variation in Detection (CVD),Link Function
+17-Aug,Encounter Sampling Area (esa),0.05740268,          NA,       NA,       NA,        NA,        NA,        NA,NA
+17-Aug,Density (n/ha),540.0444614,194.9238,271.9902,1072.274,0.1796053,0.3130812,0.3609403,NA
+17-Oct,Encounter Sampling Area (esa),6.755875,          NA,       NA,       NA,        NA,        NA,        NA,NA
+17-Oct,Density (n/ha),3.108406,1.578221,1.215878,7.946675,0.2182179,0.4584402,0.5077268,NA
+17-Aug,    probability density function (PDF) of animal activity centers (g0),0.1186521,0.04032339,0.05946764,0.2227868,NA,NA,NA,    logit
+17-Aug,            home range center (sigma),3.6021484,0.59044688,2.61794507,4.9563581,NA,NA,NA,   log
+17-Oct,    probability density function (PDF) of animal activity centers (g0),0.09028015,0.0301767,0.04607282,0.1693735,NA,NA,NA,    logit
+17-Oct,            home range center (sigma),62.76484545,23.9866923,30.43940861,129.4186058,NA,NA,NA,   log
+,,,,,,,,,
+Time,parameter,     Estimate, SE of Estimate,LCL,UCL,CVn,Cva,CVD,Link
+17-Aug,esa,0.05740268,          NA,       NA,       NA,        NA,        NA,        NA,NA
+17-Aug,D,540.0444614,194.9238,271.9902,1072.274,0.1796053,0.3130812,0.3609403,NA
+17-Oct,esa,6.755875,          NA,       NA,       NA,        NA,        NA,        NA,NA
+17-Oct,D,3.108406,1.578221,1.215878,7.946675,0.2182179,0.4584402,0.5077268,NA
+17-Aug,g0,0.1186521,0.04032339,0.05946764,0.2227868,NA,NA,NA,    logit
+17-Aug,sigma,3.6021484,0.59044688,2.61794507,4.9563581,NA,NA,NA,   log
+17-Oct,g0,0.09028015,0.0301767,0.04607282,0.1693735,NA,NA,NA,    logit
+17-Oct,sigma,62.76484545,23.9866923,30.43940861,129.4186058,NA,NA,NA,   log

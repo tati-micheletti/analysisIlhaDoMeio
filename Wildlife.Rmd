@@ -1,0 +1,125 @@
+---
+title: "Wildlife Ilha do Meio and Rata"
+author: "Tati Micheletti"
+date: "10/19/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Libraries
+
+```{r libs}
+if(!require("Require")){
+    install.packages("Require")
+}
+library("Require")
+Require("googledrive")
+Require("reproducible")
+Require("data.table")
+Require("unmarked")
+devtools::install_github("mikemeredith/AHMbook")
+# Require("MASS")
+# Require("lattice")
+# Require("glmmTMB")
+# Require("performance")
+# source("test_ZI.R")
+# If any packages were installed here, restart your session and re-run the code!
+```
+
+Negative Binomial Models are appropriate for counts, especially if there is variability in the underlying rate of events.
+
+```{r loadAndCheckData}
+# https://groups.google.com/g/unmarked/c/vfOwosiCL0s
+# https://groups.google.com/g/unmarked/c/crdKGryFsMg?pli=1
+# 
+DT <- fread("data/IPA.csv")
+mabuia <- DT[Species == "Trachylepis atlantica",] # ZI
+
+
+
+# M x JT matrix of the repeated count data, where 
+# M = number of sites, (rows)
+# J = maximum number of secondary sampling periods per site (colums together for each site, need to fill missing ones)
+# T = maximum number of primary sampling periods per site.(columns?)
+# siteCovs = A data.frame of covariates that vary at the site level. This should have M rows and one column per covariate
+# obsCovs = Either a named list of data.frames of covariates that vary within sites, or a data.frame with MxJT rows in site-major order.
+# yearlySiteCovs = Either a named list of MxT data.frames, or a site-major data.frame with MT rows and 1 column per covariate.
+ 
+######### EXAMPLES ########
+# Repeated count data with 4 primary periods and
+# no 2 secondary sampling periods (ie J=2)
+y2 <- matrix(c(
+    0,0,  2,2,  3,2,  2,2,
+    2,2,  NA,NA,  3,2,  1,1,
+    1,0,  1,1,  0,NA,  0,0,
+    0,0,  0,0,  NA,0,  NA,NA), nrow=4, ncol=8, byrow=TRUE)
+
+# Site-specific covariates
+# If a site-specific covariate is missing, all of the data for that site will 
+# be discarded (when the covariate is included in the model). 
+sc2 <- data.frame(x1 = 1:4, x2 = c('A','A','B','B'))
+
+# Observation-specific covariates
+oc2 <- list(
+    x3 = matrix(1:8, nrow=4, ncol=8, byrow=TRUE),
+    x4 = matrix(letters[1:8], nrow=4, ncol=8, byrow=TRUE))
+
+# Yearly-site covariates
+ysc <- list(
+    x5 = matrix(c(
+        1,2,3,4,
+        1,2,3,4,
+        1,2,3,4,
+        1,2,3,4), nrow=4, ncol=4, byrow=TRUE))
+
+# Primary periods of surveys
+primaryPeriod2 <- matrix(as.integer(c(
+    1,2,5,7,
+    1,2,3,4,
+    1,2,4,5,
+    1,3,5,6)), nrow=4, ncol=4, byrow=TRUE)
+
+# Create the unmarkedFrame
+umf2 <- unmarkedFramePCO(y=y2, 
+                         siteCovs=sc2, 
+                         obsCovs=oc2,
+                         yearlySiteCovs=ysc,
+                         numPrimary=4, 
+                         primaryPeriod=primaryPeriod2)
+# Take a look
+umf2
+summary(umf2)
+
+a <- read.csv("G:/My Drive/Papers Produzidos/Rat Eradication in FN/Testing OpenUnmarked/CREPN-mixtureModelDataBEVIallyears.csv")
+b <- read.csv("G:/My Drive/Papers Produzidos/Rat Eradication in FN/Testing OpenUnmarked/Years.csv")
+y <- a[,2:13]
+n <- 206
+Times <- 4
+J <- 12
+obs.cov<-list(time=a[,14:25], date=a[,26:37])
+site.cov<- data.frame (CP=a[38], crp=a[39], forest=a[40])
+yearly.site.covs<-b[,2:13]
+
+beviumf <- unmarkedFramePCO(y=y, obsCovs=obs.cov, siteCovs=site.cov, 
+                            yearlySiteCovs=yearly.site.covs, numPrimary = Times)
+ #Best Fit Detection Models
+BEVI<-list()
+BEVInulldatetime <- pcountOpen(lambdaformula = ~1, 
+                             gammaformula = ~1, 
+                             omegaformula = ~1,
+                             pformula = ~date+time,
+                             data = beviumf, 
+                             mixture="P",
+                             dynamics="constant", 
+                             K=50)
+
+
+
+
+
+
+
+```
