@@ -33,7 +33,6 @@ are prefered. In the same way, peak periods of rain (i.e., March or April)
 --> Rainy season is covered by JulianDate
 --> Need to add moon phase for crabs
 
-
 ```{r loadAndCheckData}
 DT <- fread("data/IPA.csv")
 DT[, "Date" :=  as.Date(with(DT,paste(Year,Month,Day,sep="-")),"%Y-%m-%d")]
@@ -51,9 +50,8 @@ DT[, "timeSinceStartEradication" :=  julian.Date(x = Date, origin = as.Date(min(
 DT[, pointID := 1:.N, by = c("Original_Landscape", "Date", "Island", "Species")]
 DT[, transectID := LETTERS[as.numeric(as.factor(Original_Landscape))]]
 DT[, site := paste0(transectID, pointID)]
-mabuiaRata <- DT[Island == "Ilha Rata" & Species == "Trachylepis atlantica",]
 
-################################# ILHA DO MEIO #################################
+################################# ILHA DO MEIO MABUIA #################################
 # First we subset the data to the interested place and the species
 mabuiaMeio <- DT[Island == "Ilha do Meio" & Species == "Trachylepis atlantica",]
 
@@ -398,7 +396,7 @@ names(modK) <- paste0("K_", kvals)
 #################################
 
 
-################################# ILHA RATA #################################
+################################# ILHA RATA MABUIA #################################
 # First we subset the data to the interested place and the species
 mabuiaRata <- DT[Island == "Ilha Rata" & Species == "Trachylepis atlantica",]
 
@@ -743,5 +741,114 @@ names(modK) <- paste0("K_", kvals)
 
 
  
+
+#################################
+
+################################# ILHA DO MEIO ELENIA
+# First we subset the data to the interested place and the species
+eleniaMeio <- DT[Island == "Ilha do Meio" & Species == "Trachylepis atlantica",]
+
+# Drop what we don't need, or don't want: 
+# Island, Year, Month, Day, Species, Radius, Original_Landscape, originDate
+toRemove <- c("Island", "Year", "Month", "Day", "Species", 
+              "Radius", "Original_Landscape", "originDate",
+              "pointID", "transectID")
+eleniaMeio <- eleniaMeio[, (toRemove) := NULL]
+
+# Now we make the needed objects:
+
+# y --> Matrix with observations where rows represent each site (unmarked calls this 'M'), and columns the 
+# (increasing) sampling occasion (i.e., the time series of counts, representing 
+# each visit), which unmarked calls 'T'. The value is the Counts.
+finalCounts <- dcast(eleniaMeio, site ~ Date, value.var = "Counts")
+y <- as.matrix(finalCounts[,-1]) # Convert to matrix
+
+# obsCov --> Observation covariates are the ones that vary per sampling occasion.
+# This object is a named list of each covariate, which are data frames of rows 
+# representing each site and the columns each sampling occasion. 
+# Examples are: observerID, JulianDate, timeSinceStartEradication
+observerID <- as.matrix(dcast(eleniaMeio, site ~ Date, value.var = "Observer")[,-1])
+JulianDate <- as.matrix(dcast(eleniaMeio, site ~ Date, value.var = "JulianDate")[,-1])
+timeSinceStartEradication <- as.matrix(dcast(eleniaMeio, site ~ Date, value.var = "timeSinceStartEradication")[,-1])
+# Fill in the matrix of JulianDate and timeSinceStartEradication: this affects the models later on
+replaceNAwithColMean  <- function(mx){
+  DT <- as.data.table(mx)
+  nm <- names(DT)[colSums(is.na(DT)) != 0]
+    for(clnm in nm){
+         set(DT, i = which(is.na(DT[[clnm]])), j = clnm, 
+             value = mean(DT[, get(clnm)], na.rm = TRUE))
+    }
+  return(as.matrix(DT))
+  }
+JulianDate <- replaceNAwithColMean(JulianDate)
+timeSinceStartEradication <- replaceNAwithColMean(timeSinceStartEradication)
+
+obsCovs <- list(observerID = observerID,
+               JulianDate = JulianDate,
+               timeSinceStartEradication = timeSinceStartEradication)
+
+# siteCovs --> Site covariates are fixed through time, varying only among each 
+# other. This object is matrix where rows representing each site and the columns 
+# each covariate. 
+# Examples are: Cover (landscape type)
+cover <- data.frame(dcast(eleniaMeio, site ~ Date, value.var = "Landscape")[,"2018-04-12"])
+names(cover) <- "cover"
+
+# numPrimary --> Number of primary periods
+numPrimary <- NCOL(y)
+
+yearlySiteCovs <- list(JulianDate = JulianDate,
+                       timeSinceStartEradication = timeSinceStartEradication) 
+
+# Create the unmarkedFrame
+mabuiaDF <- unmarkedFramePCO(y = y,
+                             siteCovs = cover,
+                             obsCovs = obsCovs,
+                             numPrimary = numPrimary,
+                             yearlySiteCovs = yearlySiteCovs
+                             )
+# Take a look
+mabuiaDF
+summary(mabuiaDF)
+
+# MODELS TESTED
+# Null Model
+# We do have Zero Inflated data (significant)
+# The dispersion of data is not signifficant
+# This points us to use a ZIP model instead of a NB 
+# Kind of supported by Stoklosa et al., (Diversity 2022, 14(5), 320; https://doi.org/10.3390/d14050320) 
+# and by Kery 2018 (Ecology, 99(2), 2018, pp. 281–288), even though it has smaller AIC
+t0 <- Sys.time()
+nullNB <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                      gammaformula = ~1,  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~1,
+                      data = mabuiaDF,
+                      mixture = "NB", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) # AIC: 648.5343
+
+nullZIP <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                      gammaformula = ~1,  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~1,
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) # AIC: 707.3251
+t1 <- Sys.time()
+
+#################################
+
+################################# ILHA RATA ELENIA
+#################################
+
+################################# ILHA RATA CRAB
+#################################
+
+################################# ILHA RATA CRAB
+#################################
 
 ```
