@@ -800,22 +800,32 @@ names(cover) <- "cover" # Also a moot point for Elenia as they are only in the t
 numPrimary <- NCOL(y)/2 # In the case of Elenia, we have 2 counts (i.e., secondary 
 # periods) per primary occasion
 
-# Since the closed periods are really close, we can use one variable for both days 
+ # Since the closed periods are really close, we can use one variable for both days 
 # (yearlySiteCovs). To do this, we need to get the mean of every n columns (n = 
 # secondary periods, or 2 in our case). I will do this using a loop
 interval <- NCOL(y)/numPrimary # How many secondary periods we have
 firstColsToJoin <- seq(from = 1, to = NCOL(y), by = interval)
+# For timeSinceStartEradication
 newTSE <- lapply(firstColsToJoin, function(i){
     colsToJoin <- colnames(timeSinceStartEradication)[i:(i+1)]
     TSE <- data.table(timeSinceStartEradication[, colsToJoin])
-    TSE[, names(TSE)[i] := rowMeans(.SD), .SDcols = names(TSE)]
-    TSE[,names(TSE)[i+1] := NULL]
+    TSE[, colnames(timeSinceStartEradication)[i] := rowMeans(.SD), .SDcols = names(TSE)]
+    TSE[,names(TSE)[NCOL(TSE)] := NULL]
 return(TSE)
 })
+newTSE <- setDT(unlist(newTSE, recursive = FALSE),check.names = TRUE)[]
+# For JulianDate
+newJD <- lapply(firstColsToJoin, function(i){
+    colsToJoin <- colnames(JulianDate)[i:(i+1)]
+    JD <- data.table(JulianDate[, colsToJoin])
+    JD[, colnames(JulianDate)[i] := rowMeans(.SD), .SDcols = names(JD)]
+    JD[,names(JD)[NCOL(JD)] := NULL]
+return(JD)
+})
+newJD <- setDT(unlist(newJD, recursive = FALSE),check.names = TRUE)[]
 
-
-  yearlySiteCovs <- list(JulianDate = JulianDate,
-                       timeSinceStartEradication = timeSinceStartEradication) 
+yearlySiteCovs <- list(JulianDate = as.matrix(newJD),
+                       timeSinceStartEradication = as.matrix(newTSE)) 
 
 # Create the unmarkedFrame
 eleniaDF <- unmarkedFramePCO(y = y,
@@ -836,26 +846,119 @@ summary(eleniaDF)
 # Kind of supported by Stoklosa et al., (Diversity 2022, 14(5), 320; https://doi.org/10.3390/d14050320) 
 # and by Kery 2018 (Ecology, 99(2), 2018, pp. 281–288), even though it has smaller AIC
 t0 <- Sys.time()
+nullP <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                      gammaformula = ~1,  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~1,
+                      data = eleniaDF,
+                      mixture = "P", # Not overdispersed and not zero inflated. Here Poisson is the best model.
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) # AIC: 227.2522
+
 nullNB <- pcountOpen(lambdaformula = ~1,  # Initial abundance
                       gammaformula = ~1,  # Formula for population growth rate
                       omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
                       pformula = ~1,
-                      data = mabuiaDF,
-                      mixture = "NB", # Negative binomial
+                      data = eleniaDF,
+                      mixture = "NB", # Not overdispersed and not zero inflated. Here Poisson is the best model.
                       dynamics = "trend", # We want the population trend through time
                       immigration = FALSE,
-                      K = 100) # AIC: 648.5343
+                      K = 100) # AIC: 229.2535 
 
 nullZIP <- pcountOpen(lambdaformula = ~1,  # Initial abundance
                       gammaformula = ~1,  # Formula for population growth rate
                       omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
                       pformula = ~1,
-                      data = mabuiaDF,
+                      data = eleniaDF,
                       mixture = "ZIP", # Negative binomial
                       dynamics = "trend", # We want the population trend through time
                       immigration = FALSE,
-                      K = 100) # AIC: 707.3251
+                      K = 100) # AIC: 229.2526 
 t1 <- Sys.time()
+mod1 <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~1,
+                      data = eleniaDF,
+                      mixture = "P", # Not overdispersed and not zero inflated. Here Poisson is the best model.
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) # AIC: 
+t2 <- Sys.time()
+mod2 <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                      gammaformula = ~1,  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(JulianDate),
+                      data = eleniaDF,
+                      mixture = "P", # Not overdispersed and not zero inflated. Here Poisson is the best model.
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) # AIC: 
+t3 <- Sys.time()
+mod3 <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(JulianDate),
+                      data = eleniaDF,
+                      mixture = "P", # Not overdispersed and not zero inflated. Here Poisson is the best model.
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) # AIC: 
+t4 <- Sys.time()
+mod4 <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication)+scale(JulianDate),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~1,
+                      data = eleniaDF,
+                      mixture = "P", # Not overdispersed and not zero inflated. Here Poisson is the best model.
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) # AIC: 
+t5 <- Sys.time()
+mod5 <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication)+scale(JulianDate),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(JulianDate),
+                      data = eleniaDF,
+                      mixture = "P", # Not overdispersed and not zero inflated. Here Poisson is the best model.
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) # AIC: 
+t6 <- Sys.time()
+mod6 <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                      gammaformula = ~scale(JulianDate),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(JulianDate),
+                      data = eleniaDF,
+                      mixture = "P", # Not overdispersed and not zero inflated. Here Poisson is the best model.
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) # AIC: 
+t7 <- Sys.time()
+mod7 <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                      gammaformula = ~scale(JulianDate),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~1,
+                      data = eleniaDF,
+                      mixture = "P", # Not overdispersed and not zero inflated. Here Poisson is the best model.
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) # AIC: 
+t8 <- Sys.time()
+
+modList <- fitList(
+  "lam(.)gamma(.)phi(.)p(.)" = nullP,
+  "lam(.)gamma(timeSinceStartEradication)phi(.)p(.)" = mod1,
+  "lam(.)gamma(.)phi(.)p(JulianDate)" = mod2,  # Best model
+  "lam(.)gamma(timeSinceStartEradication)phi(.)p(JulianDate)" = mod3, 
+  "lam(.)gamma(timeSinceStartEradication+JulianDate)phi(.)p(.)" = mod4, 
+  "lam(.)gamma(timeSinceStartEradication+JulianDate)phi(.)p(JulianDate)" = mod5,  
+  "lam(.)gamma(JulianDate)phi(.)p(JulianDate)" = mod6,  
+  "lam(.)gamma(JulianDate)phi(.)p(.)" = mod7
+)
+
+modelSelected <- modSel(modList)
 
 #################################
 
