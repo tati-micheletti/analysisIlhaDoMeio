@@ -98,7 +98,7 @@ obsCovs <- list(observerID = observerID,
 # other. This object is matrix where rows representing each site and the columns 
 # each covariate. 
 # Examples are: Cover (landscape type)
-cover <- data.frame(dcast(mabuiaMeio, site ~ Date, value.var = "Landscape")[,"2018-04-12"])
+cover <- data.frame(dcast(mabuiaMeio, site ~ Date, value.var = "Landscape")[,2])
 names(cover) <- "cover"
 
 # numPrimary --> Number of primary periods
@@ -365,20 +365,21 @@ pop <- unique(data.table(initialPop = predict(mod12.2, type = "lambda")[,1], cov
 # 4:  28.217764       bushy
 
 # The observation radius for Mabuia is 3m, so the area is 28.27m2 or 0,002827ha
- 
-pop[, areaHa := 0.002827]
-pop[, areaM2 := 28.27]
+pop[, areaM2 := (pi*3^2)] # pi*observation radius^2 = observed area
+pop[, areaHa := areaM2/10^4] # area in hectare
 pop[, densityHa := initialPop/areaHa]
 pop[, densityM2 := initialPop/areaM2]
 # 0.357 ± 0.170 individuals/m² (Vini's work) on secondary islands (0.187 - 0.527)
 
 # I won't deal with calculating the total abundance, not the proposal here! We want to see the change in 
 # lambda / population growth rate
-kvals <- c(20, 50, 100, 250, 500) # Min K is 13+1 (max observed number of indiv + 1) so we go between 20 and 500
+# We need to check if our K is enough. This is done my running the best model with various values of 
+# K until AIC remains unchanged
+kvals <- c(20, 50, 100, 250, 500, 600, 800) # Min K is 13+1 (max observed number of indiv + 1) so we go between 20 and 500
 modK <- list()
-AICs <- numeric(5L)
+AICs <- numeric(7L)
 
-for (i in 1:5){
+for (i in 6:7){
   tic(paste0("Model with K ", kvals[i], " finished: "))
  modK[[i]] <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
                       gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
@@ -443,7 +444,7 @@ obsCovs <- list(observerID = observerID,
 # other. This object is matrix where rows representing each site and the columns 
 # each covariate. 
 # Examples are: Cover (landscape type)
-cover <- data.frame(dcast(mabuiaRata, site ~ Date, value.var = "Landscape")[,"2018-04-12"]) ##### Un-hardcode!
+cover <- data.frame(dcast(mabuiaRata, site ~ Date, value.var = "Landscape")[,2]) ##### Un-hardcode!
 names(cover) <- "cover"
 
 # numPrimary --> Number of primary periods
@@ -746,7 +747,7 @@ names(modK) <- paste0("K_", kvals)
 
 ################################# ILHA DO MEIO ELENIA
 # First we subset the data to the interested place and the species
-eleniaMeio <- DT[Island == "Ilha do Meio" & Species == "Trachylepis atlantica",]
+eleniaMeio <- DT[Island == "Ilha do Meio" & Species == "Elaenia ridleyana",]
 
 # Drop what we don't need, or don't want: 
 # Island, Year, Month, Day, Species, Radius, Original_Landscape, originDate
@@ -783,7 +784,7 @@ replaceNAwithColMean  <- function(mx){
 JulianDate <- replaceNAwithColMean(JulianDate)
 timeSinceStartEradication <- replaceNAwithColMean(timeSinceStartEradication)
 
-obsCovs <- list(observerID = observerID,
+obsCovs <- list(#observerID = observerID, # Observer is a moot point for Elenia, as only one person did it
                JulianDate = JulianDate,
                timeSinceStartEradication = timeSinceStartEradication)
 
@@ -791,25 +792,41 @@ obsCovs <- list(observerID = observerID,
 # other. This object is matrix where rows representing each site and the columns 
 # each covariate. 
 # Examples are: Cover (landscape type)
-cover <- data.frame(dcast(eleniaMeio, site ~ Date, value.var = "Landscape")[,"2018-04-12"])
-names(cover) <- "cover"
+cover <- data.frame(dcast(eleniaMeio, site ~ Date, value.var = "Landscape")[,2]) # Here we 
+# get any column but the first, which is the site. 
+names(cover) <- "cover" # Also a moot point for Elenia as they are only in the treed area
 
 # numPrimary --> Number of primary periods
-numPrimary <- NCOL(y)
+numPrimary <- NCOL(y)/2 # In the case of Elenia, we have 2 counts (i.e., secondary 
+# periods) per primary occasion
 
-yearlySiteCovs <- list(JulianDate = JulianDate,
+# Since the closed periods are really close, we can use one variable for both days 
+# (yearlySiteCovs). To do this, we need to get the mean of every n columns (n = 
+# secondary periods, or 2 in our case). I will do this using a loop
+interval <- NCOL(y)/numPrimary # How many secondary periods we have
+firstColsToJoin <- seq(from = 1, to = NCOL(y), by = interval)
+newTSE <- lapply(firstColsToJoin, function(i){
+    colsToJoin <- colnames(timeSinceStartEradication)[i:(i+1)]
+    TSE <- data.table(timeSinceStartEradication[, colsToJoin])
+    TSE[, names(TSE)[i] := rowMeans(.SD), .SDcols = names(TSE)]
+    TSE[,names(TSE)[i+1] := NULL]
+return(TSE)
+})
+
+
+  yearlySiteCovs <- list(JulianDate = JulianDate,
                        timeSinceStartEradication = timeSinceStartEradication) 
 
 # Create the unmarkedFrame
-mabuiaDF <- unmarkedFramePCO(y = y,
+eleniaDF <- unmarkedFramePCO(y = y,
                              siteCovs = cover,
                              obsCovs = obsCovs,
                              numPrimary = numPrimary,
                              yearlySiteCovs = yearlySiteCovs
                              )
 # Take a look
-mabuiaDF
-summary(mabuiaDF)
+eleniaDF
+summary(eleniaDF)
 
 # MODELS TESTED
 # Null Model
