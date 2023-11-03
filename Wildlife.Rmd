@@ -20,21 +20,21 @@ Require("googledrive")
 Require("reproducible")
 Require("data.table")
 Require("unmarked")
-devtools::install_github("mikemeredith/AHMbook")
-# Require("MASS")
-# Require("lattice")
-# Require("glmmTMB")
-# Require("performance")
-# source("test_ZI.R")
+Require("tictoc")
 # If any packages were installed here, restart your session and re-run the code!
 ```
 
-Negative Binomial Models are appropriate for counts, especially if there is variability in the underlying rate of events.
+Negative Binomial Models are appropriate for counts, especially if there is variability in the underlying rate of events. However, 
+these are better suited for overdispersed data, which Mabuia isn't really. Mabuia data is, however, Zero inflated. So ZIP model is 
+more appropriate. See references below.
+
+CRABS: lesser wave action associated with neap high tides (in first and last quarters of moon cycle)
+are prefered. In the same way, peak periods of rain (i.e., March or April)
+--> Rainy season is covered by JulianDate
+--> Need to add moon phase for crabs
+
 
 ```{r loadAndCheckData}
-# https://groups.google.com/g/unmarked/c/vfOwosiCL0s
-# https://groups.google.com/g/unmarked/c/crdKGryFsMg?pli=1
- 
 DT <- fread("data/IPA.csv")
 DT[, "Date" :=  as.Date(with(DT,paste(Year,Month,Day,sep="-")),"%Y-%m-%d")]
 DT[, "originDate" :=  as.Date(paste(Year,1,1,sep="-"),"%Y-%m-%d")]
@@ -76,16 +76,22 @@ y <- as.matrix(finalCounts[,-1]) # Convert to matrix
 # This object is a named list of each covariate, which are data frames of rows 
 # representing each site and the columns each sampling occasion. 
 # Examples are: observerID, JulianDate, timeSinceStartEradication
-# observerID <- matrix(as.numeric(as.factor(as.matrix(dcast(mabuiaMeio, site ~ Date, value.var = "Observer")[,-1]))),
-#                         nrow = NROW(y), ncol = NCOL(y), byrow = FALSE)
-# JulianDate <- matrix(as.numeric(as.matrix(dcast(mabuiaMeio, site ~ Date, value.var = "JulianDate")[,-1])),
-#                         nrow = NROW(y), ncol = NCOL(y), byrow = FALSE)
-# timeSinceStartEradication <- matrix(as.numeric(as.matrix(dcast(mabuiaMeio, site ~ Date, 
-#                                                value.var = "timeSinceStartEradication")[,-1])),
-#                                     nrow = NROW(y), ncol = NCOL(y), byrow = FALSE)
 observerID <- as.matrix(dcast(mabuiaMeio, site ~ Date, value.var = "Observer")[,-1])
 JulianDate <- as.matrix(dcast(mabuiaMeio, site ~ Date, value.var = "JulianDate")[,-1])
 timeSinceStartEradication <- as.matrix(dcast(mabuiaMeio, site ~ Date, value.var = "timeSinceStartEradication")[,-1])
+# Fill in the matrix of JulianDate and timeSinceStartEradication: this affects the models later on
+replaceNAwithColMean  <- function(mx){
+  DT <- as.data.table(mx)
+  nm <- names(DT)[colSums(is.na(DT)) != 0]
+    for(clnm in nm){
+         set(DT, i = which(is.na(DT[[clnm]])), j = clnm, 
+             value = mean(DT[, get(clnm)], na.rm = TRUE))
+    }
+  return(as.matrix(DT))
+  }
+JulianDate <- replaceNAwithColMean(JulianDate)
+timeSinceStartEradication <- replaceNAwithColMean(timeSinceStartEradication)
+
 obsCovs <- list(observerID = observerID,
                JulianDate = JulianDate,
                timeSinceStartEradication = timeSinceStartEradication)
@@ -97,132 +103,645 @@ obsCovs <- list(observerID = observerID,
 cover <- data.frame(dcast(mabuiaMeio, site ~ Date, value.var = "Landscape")[,"2018-04-12"])
 names(cover) <- "cover"
 
-# numPrimary --> Maximum number of observed primary periods all sites
-numPrimary <- 5
-# primaryPeriod --> In which primary period each observation happened?
-primaryPeriod <- matrix(as.integer(c(
-    rep(1, times = NROW(y)),
-    rep(2, times = NROW(y)),
-        rep(2, times = NROW(y)),
-    rep(3, times = NROW(y)),
-    rep(4, times = NROW(y))
-)), nrow = NROW(y), ncol = NCOL(y), byrow = FALSE)
+# numPrimary --> Number of primary periods
+numPrimary <- NCOL(y)
 
-# But what if I use the time since eradication here instead of as a covariate?! 
-# primaryPeriod <- matrix(as.integer(
-#   sort(unique(mabuiaMeio$timeSinceStartEradication))), 
-#   nrow = NROW(y), ncol = NCOL(y), byrow = TRUE)
-# This took a long time... I broke the calculations because I think that what is 
-# important is the time between the primary periods, which can be derived from the 
-# time since start eradication.
-# 
-# tmDiff <- unique(mabuiaMeio$timeSinceStartEradication)
-# primaryPeriod <- matrix(as.integer(
-#   c(0, dist(tmDiff)[1:4])), 
-#   nrow = NROW(y), ncol = NCOL(y), byrow = TRUE)
-
-yearlySiteCovs <- list(timeSinceStartEradication = timeSinceStartEradication) 
-# If I don't pass this as yearlySiteCov, the model doesn't work...
+yearlySiteCovs <- list(JulianDate = JulianDate,
+                       timeSinceStartEradication = timeSinceStartEradication) 
 
 # Create the unmarkedFrame
 mabuiaDF <- unmarkedFramePCO(y = y,
                              siteCovs = cover,
                              obsCovs = obsCovs,
                              numPrimary = numPrimary,
-                             primaryPeriod = primaryPeriod, 
                              yearlySiteCovs = yearlySiteCovs
                              )
 # Take a look
 mabuiaDF
 summary(mabuiaDF)
 
-mod <- pcountOpen(lambdaformula = ~1,  # Initial abundance
-                  gammaformula = ~1,  # Formula for population growth rate
-                  omegaformula = ~1 + timeSinceStartEradication, # Formula for apparent survival probability: I wanted 
-                                     # timeSinceStartEradication as cv. 
-                                     # However, when "trend", no covariates are 
-                                     # allowed here!
-                  pformula = ~1 + timeSinceStartEradication, # Formula for detection probability.
-                  data = mabuiaDF, 
-                  mixture = "NB", # Negative binomial
-                  dynamics = "autoreg", # We want the population trend through time
-                  immigration = FALSE,
-                  K = 150)
-mod
+# MODELS TESTED
+# Null Model
+# We do have Zero Inflated data (significant)
+# The dispersion of data is not signifficant
+# This points us to use a ZIP model instead of a NB 
+# Kind of supported by Stoklosa et al., (Diversity 2022, 14(5), 320; https://doi.org/10.3390/d14050320) 
+# and by Kery 2018 (Ecology, 99(2), 2018, pp. 281–288), even though it has smaller AIC
+t0 <- Sys.time()
+nullNB <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                      gammaformula = ~1,  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~1,
+                      data = mabuiaDF,
+                      mixture = "NB", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) # AIC: 648.5343
 
-(exp(0.000364))
+nullZIP <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                      gammaformula = ~1,  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~1,
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) # AIC: 707.3251
+t1 <- Sys.time()
+mod1 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~1,  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~1,
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100)
+t2 <- Sys.time()
+mod2 <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~1,
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100)
+t3 <- Sys.time()
+mod3 <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                      gammaformula = ~1,  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(timeSinceStartEradication),
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t4 <- Sys.time()
+mod4 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~1,
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t5 <- Sys.time()
+mod5 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~1,  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(timeSinceStartEradication),
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t6 <- Sys.time()
+mod6 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(timeSinceStartEradication),
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t7 <- Sys.time()
+mod7 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(JulianDate),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~1,
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t8 <- Sys.time()
+mod8 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication)+scale(JulianDate),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(timeSinceStartEradication)+scale(JulianDate),
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t9 <- Sys.time()
+mod9 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication)+scale(JulianDate),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(timeSinceStartEradication)+scale(JulianDate)+observerID,
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t10 <- Sys.time()
+mod10 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(timeSinceStartEradication)+scale(JulianDate),
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t11 <- Sys.time()
+mod11 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(timeSinceStartEradication)+scale(JulianDate)+observerID,
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t12 <- Sys.time()
+mod12 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(JulianDate)+observerID,
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+
+t13 <-Sys.time()
+mod13 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(JulianDate),
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t14 <- Sys.time()
+mod14 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(JulianDate)+cover,
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t15 <-Sys.time()
+mod15 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~cover,
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t16 <- Sys.time()
+mod16 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~cover+scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(JulianDate)+observerID,
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t17 <- Sys.time()
+mod17 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~1,  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(JulianDate)+observerID,
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t18 <-Sys.time()
+totTime <- numeric(17L)
+for (m in 0:17){
+  tm <- get(paste0("t", m))-get(paste0("t", m+1))*-1
+  totTime[m+1] <- if (units(tm)=="secs")
+    as.numeric(tm)/60 else # Seconds
+      if (units(tm)=="mins")
+        as.numeric(tm) else # Minutes
+          as.numeric(tm)*60 # Hours
+  print(totTime[m+1])
+}
+sum(totTime) #   
+
+modList <- fitList(
+  "lam(.)gamma(.)phi(.)p(.)" = nullZIP,
+  "lam(cover)gamma(.)phi(.)p(.)" = mod1,
+  "lam(.)gamma(timeSinceStartEradication)phi(.)p(.)" = mod2,  
+  "lam(.)gamma(.)phi(.)p(timeSinceStartEradication)" = mod3, 
+  "lam(cover)gamma(timeSinceStartEradication)phi(.)p(.)" = mod4, 
+  "lam(cover)gamma(.)phi(.)p(timeSinceStartEradication)" = mod5,  
+  "lam(cover)gamma(timeSinceStartEradication)phi(.)p(timeSinceStartEradication)" = mod6,  
+  "lam(cover)gamma(JulianDate)phi(.)p(.)" = mod7, 
+  "lam(cover)gamma(timeSinceStartEradication+JulianDate)phi(.)p(timeSinceStartEradication+JulianDate)" = mod8, 
+  "lam(cover)gamma(timeSinceStartEradication+JulianDate)phi(.)p(timeSinceStartEradication+JulianDate+observer)" = mod9,
+  "lam(cover)gamma(timeSinceStartEradication)phi(.)p(timeSinceStartEradication+JulianDate)" = mod10,
+  "lam(cover)gamma(timeSinceStartEradication)phi(.)p(timeSinceStartEradication+JulianDate+observer)" = mod11,
+  "lam(cover)gamma(timeSinceStartEradication)phi(.)p(JulianDate+observer)" = mod12, # BEST MODEL
+  "lam(cover)gamma(timeSinceStartEradication)phi(.)p(JulianDate)" = mod13,
+  "lam(cover)gamma(timeSinceStartEradication)phi(.)p(JulianDate+cover)" = mod14,
+  "lam(cover)gamma(timeSinceStartEradication)phi(.)p(cover)" = mod15,
+  "lam(cover)gamma(cover+timeSinceStartEradication)phi(.)p(JulianDate+observer)" = mod16,
+  "lam(cover)gamma(.)phi(.)p(JulianDate+observer)" = mod17
+)
+
+modelSelected <- modSel(modList)
+
+# Back-transformation of parameters using predict()
+predict(mod12, type = "gamma")
+# Gamma (lambda --> population growth rate is increasing)
+pop <- unique(data.table(initialPop = predict(mod12.2, type = "lambda")[,1], cover = cover))
+
+# > pop
+#    initialPop cover.cover
+# 1:   3.215604        open
+# 2:  13.317817   semi-open
+# 3:  79.094512       treed
+# 4:  28.217764       bushy
+
+# The observation radius for Mabuia is 3m, so the area is 28.27m2 or 0,002827ha
+ 
+pop[, areaHa := 0.002827]
+pop[, areaM2 := 28.27]
+pop[, densityHa := initialPop/areaHa]
+pop[, densityM2 := initialPop/areaM2]
+# 0.357 ± 0.170 individuals/m² (Vini's work) on secondary islands (0.187 - 0.527)
+
+# I won't deal with calculating the total abundance, not the proposal here! We want to see the change in 
+# lambda / population growth rate
+kvals <- c(20, 50, 100, 250, 500) # Min K is 13+1 (max observed number of indiv + 1) so we go between 20 and 500
+modK <- list()
+AICs <- numeric(5L)
+
+for (i in 1:5){
+  tic(paste0("Model with K ", kvals[i], " finished: "))
+ modK[[i]] <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(JulianDate)+observerID,
+                      data = mabuiaDF,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = kvals[i])
+ toc()
+ AICs[i] <- modK[[i]]@AIC
+}
+names(modK) <- paste0("K_", kvals)
+#################################
 
 
+################################# ILHA RATA #################################
+# First we subset the data to the interested place and the species
+mabuiaRata <- DT[Island == "Ilha Rata" & Species == "Trachylepis atlantica",]
 
+# Drop what we don't need, or don't want: 
+# Island, Year, Month, Day, Species, Radius, Original_Landscape, originDate
+toRemove <- c("Island", "Year", "Month", "Day", "Species", 
+              "Radius", "Original_Landscape", "originDate",
+              "pointID", "transectID")
+mabuiaRata <- mabuiaRata[, (toRemove) := NULL]
 
+# Now we make the needed objects:
 
-# lambdaformula = ~ 1,  # Initial abundance
-# gammaformula = ~ 1,  # Formula for population growth rate
-# omegaformula = ~ 1, # Formula for apparent survival probability
-# pformula = ~ 1, # Formula for detection probability
-# data = umf2,
-# mixture = "NB", # Negative binomial
-# dynamics = "trend", # We want the population trend through time
-# immigration = FALSE,
-# K = 50
+# y --> Matrix with observations where rows represent each site (unmarked calls this 'M'), and columns the 
+# (increasing) sampling occasion (i.e., the time series of counts, representing 
+# each visit), which unmarked calls 'T'. The value is the Counts.
+finalCounts <- dcast(mabuiaRata, site ~ Date, value.var = "Counts")
+y <- as.matrix(finalCounts[,-1]) # Convert to matrix
 
-######### EXAMPLES ########
-# Repeated count data with 4 primary periods and
-# 2 secondary sampling periods (ie J=2)
-y2 <- matrix(c(
-    3,4,  2,2,  2,1,  0,1,
-    2,3,  4,NA,  2,2,  0,1,
-    1,3,  1,1,  0,NA,  0,1,
-    4,0,  0,1,  NA,1,  NA,2), nrow=4, ncol=8, byrow=TRUE)
+# obsCov --> Observation covariates are the ones that vary per sampling occasion.
+# This object is a named list of each covariate, which are data frames of rows 
+# representing each site and the columns each sampling occasion. 
+# Examples are: observerID, JulianDate, timeSinceStartEradication
+observerID <- as.matrix(dcast(mabuiaRata, site ~ Date, value.var = "Observer")[,-1])
+JulianDate <- as.matrix(dcast(mabuiaRata, site ~ Date, value.var = "JulianDate")[,-1])
+timeSinceStartEradication <- as.matrix(dcast(mabuiaRata, site ~ Date, value.var = "timeSinceStartEradication")[,-1])
+# Fill in the matrix of JulianDate and timeSinceStartEradication: this affects the models later on
+replaceNAwithColMean  <- function(mx){
+  DT <- as.data.table(mx)
+  nm <- names(DT)[colSums(is.na(DT)) != 0]
+    for(clnm in nm){
+         set(DT, i = which(is.na(DT[[clnm]])), j = clnm, 
+             value = mean(DT[, get(clnm)], na.rm = TRUE))
+    }
+  return(as.matrix(DT))
+  }
+JulianDate <- replaceNAwithColMean(JulianDate)
+timeSinceStartEradication <- replaceNAwithColMean(timeSinceStartEradication)
 
-# Site-specific covariates
-# If a site-specific covariate is missing, all of the data for that site will
-# be discarded (when the covariate is included in the model).
-sc2 <- data.frame(cover = c("forested", "forested", "open", "open"))
+obsCovs <- list(observerID = observerID,
+               JulianDate = JulianDate,
+               timeSinceStartEradication = timeSinceStartEradication)
 
-# Observation-specific covariates
-observerID <- matrix(1:2, nrow=4, ncol=8, byrow=FALSE)
-daysSinceStartEradication <- matrix(rep(c(0, 1, 30, 31, 60, 61, 80, 82)), nrow=4, ncol=8, byrow=TRUE)
-oc2 <- list(
-    observerID = observerID,
-    # julianDate = matrix(, nrow=4, ncol=8, byrow=TRUE),
-    daysSinceStartEradication = daysSinceStartEradication)
+# siteCovs --> Site covariates are fixed through time, varying only among each 
+# other. This object is matrix where rows representing each site and the columns 
+# each covariate. 
+# Examples are: Cover (landscape type)
+cover <- data.frame(dcast(mabuiaRata, site ~ Date, value.var = "Landscape")[,"2018-04-12"]) ##### Un-hardcode!
+names(cover) <- "cover"
 
-# Primary periods of surveys
-primaryPeriod2 <- matrix(as.integer(c(
-    1,2,2,3,
-    1,2,2,3,
-    1,2,2,3,
-    1,2,2,3)), nrow=4, ncol=4, byrow=TRUE)
+# numPrimary --> Number of primary periods
+numPrimary <- NCOL(y)
+
+yearlySiteCovs <- list(JulianDate = JulianDate,
+                       timeSinceStartEradication = timeSinceStartEradication) 
 
 # Create the unmarkedFrame
-umf2 <- unmarkedFramePCO(y=y2,
-                         siteCovs=sc2,
-                         obsCovs=oc2,
-                         numPrimary=4,
-                         primaryPeriod=primaryPeriod2)
+mabuiaDF2 <- unmarkedFramePCO(y = y,
+                             siteCovs = cover,
+                             obsCovs = obsCovs,
+                             numPrimary = numPrimary,
+                             yearlySiteCovs = yearlySiteCovs
+                             )
 # Take a look
-umf2
-summary(umf2)
+mabuiaDF2
+summary(mabuiaDF2)
 
-mod <- pcountOpen(lambdaformula = ~ cover,  # Initial abundance
-                  gammaformula = ~ 1,  # Formula for population growth rate
-                  omegaformula = ~1, # Formula for apparent survival probability
-                  pformula = ~ observerID, # Formula for detection probability
-                  data = umf2,
-                  mixture = "NB", # Negative binomial
-                  dynamics = "trend", # We want the population trend through time
-                  immigration = FALSE,
-                  K = 50)
-mod
+# MODELS TESTED
+# Null Model
+# We do have Zero Inflated data (significant)
+# The dispersion of data is not signifficant
+# This points us to use a ZIP model instead of a NB 
+# Kind of supported by Stoklosa et al., (Diversity 2022, 14(5), 320; https://doi.org/10.3390/d14050320) 
+# and by Kery 2018 (Ecology, 99(2), 2018, pp. 281–288), even though it has smaller AIC
+t0 <- Sys.time()
+nullNB2 <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                      gammaformula = ~1,  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~1,
+                      data = mabuiaDF2,
+                      mixture = "NB", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) # AIC: 648.5343
 
-# Parameters spitted out:
-# Abundance
-# Growth Rate (the finite rate of increase)
-# Detection
-# Dispersion (α, describes data dispersion -- lower α implies higher variance)
+nullZIP2 <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                      gammaformula = ~1,  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~1,
+                      data = mabuiaDF2,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) # AIC: 707.3251
+t1 <- Sys.time()
+mod_1 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~1,  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~1,
+                      data = mabuiaDF2,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100)
+t2 <- Sys.time()
+mod_2 <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~1,
+                      data = mabuiaDF2,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100)
+t3 <- Sys.time()
+mod_3 <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                      gammaformula = ~1,  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(timeSinceStartEradication),
+                      data = mabuiaDF2,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t4 <- Sys.time()
+mod_4 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~1,
+                      data = mabuiaDF2,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t5 <- Sys.time()
+mod_5 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~1,  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(timeSinceStartEradication),
+                      data = mabuiaDF2,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t6 <- Sys.time()
+mod_6 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(timeSinceStartEradication),
+                      data = mabuiaDF2,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t7 <- Sys.time()
+mod_7 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(JulianDate),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~1,
+                      data = mabuiaDF2,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t8 <- Sys.time()
+mod_8 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication)+scale(JulianDate),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(timeSinceStartEradication)+scale(JulianDate),
+                      data = mabuiaDF2,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t9 <- Sys.time()
+mod_9 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication)+scale(JulianDate),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(timeSinceStartEradication)+scale(JulianDate)+observerID,
+                      data = mabuiaDF2,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t10 <- Sys.time()
+mod_10 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(timeSinceStartEradication)+scale(JulianDate),
+                      data = mabuiaDF2,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t11 <- Sys.time()
+mod_11 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(timeSinceStartEradication)+scale(JulianDate)+observerID,
+                      data = mabuiaDF2,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t12 <- Sys.time()
+mod_12 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(JulianDate)+observerID,
+                      data = mabuiaDF2,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
 
-# BUT NOW I NEED TO GET THE PARAMETERS BACK IN THEIR ORIGINAL FORMAT!
+t13 <-Sys.time()
+mod_13 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(JulianDate),
+                      data = mabuiaDF2,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t14 <- Sys.time()
+mod_14 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(JulianDate)+cover,
+                      data = mabuiaDF2,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t15 <-Sys.time()
+mod_15 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~cover,
+                      data = mabuiaDF2,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t16 <- Sys.time()
+mod_16 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~cover+scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(JulianDate)+observerID,
+                      data = mabuiaDF2,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t17 <- Sys.time()
+mod_17 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~1,  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(JulianDate)+observerID,
+                      data = mabuiaDF2,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = 100) 
+t18 <-Sys.time()
+totTime <- numeric(17L)
+for (m in 0:17){
+  tm <- get(paste0("t", m))-get(paste0("t", m+1))*-1
+  totTime[m+1] <- if (units(tm)=="secs")
+    as.numeric(tm)/60 else # Seconds
+      if (units(tm)=="mins")
+        as.numeric(tm) else # Minutes
+          as.numeric(tm)*60 # Hours
+  print(totTime[m+1])
+}
+sum(totTime) #   
 
+mod_List <- fitList(
+  "lam(.)gamma(.)phi(.)p(.)" = nullZIP,
+  "lam(cover)gamma(.)phi(.)p(.)" = mod_1,
+  "lam(.)gamma(timeSinceStartEradication)phi(.)p(.)" = mod_2,  
+  "lam(.)gamma(.)phi(.)p(timeSinceStartEradication)" = mod_3, 
+  "lam(cover)gamma(timeSinceStartEradication)phi(.)p(.)" = mod_4, 
+  "lam(cover)gamma(.)phi(.)p(timeSinceStartEradication)" = mod_5,  
+  "lam(cover)gamma(timeSinceStartEradication)phi(.)p(timeSinceStartEradication)" = mod_6,  
+  "lam(cover)gamma(JulianDate)phi(.)p(.)" = mod_7, 
+  "lam(cover)gamma(timeSinceStartEradication+JulianDate)phi(.)p(timeSinceStartEradication+JulianDate)" = mod_8, 
+  "lam(cover)gamma(timeSinceStartEradication+JulianDate)phi(.)p(timeSinceStartEradication+JulianDate+observer)" = mod_9,
+  "lam(cover)gamma(timeSinceStartEradication)phi(.)p(timeSinceStartEradication+JulianDate)" = mod_10,
+  "lam(cover)gamma(timeSinceStartEradication)phi(.)p(timeSinceStartEradication+JulianDate+observer)" = mod_11,
+  "lam(cover)gamma(timeSinceStartEradication)phi(.)p(JulianDate+observer)" = mod_12,
+  "lam(cover)gamma(timeSinceStartEradication)phi(.)p(JulianDate)" = mod_13,
+  "lam(cover)gamma(timeSinceStartEradication)phi(.)p(JulianDate+cover)" = mod_14,
+  "lam(cover)gamma(timeSinceStartEradication)phi(.)p(cover)" = mod_15,
+  "lam(cover)gamma(cover+timeSinceStartEradication)phi(.)p(JulianDate+observer)" = mod_16,
+  "lam(cover)gamma(.)phi(.)p(JulianDate+observer)" = mod_17
+)
+
+modelSelected2 <- modSel(mod_List)
+
+# Back-transformation of parameters using predict()
+predict(mod12, type = "gamma")
+# Gamma (lambda --> population growth rate is increasing)
+pop <- unique(data.table(initialPop = predict(mod12, type = "lambda")[,1], cover = cover))
+
+# > pop
+#    initialPop cover.cover
+# 1:   3.215604        open
+# 2:  13.317817   semi-open
+# 3:  79.094512       treed
+# 4:  28.217764       bushy
+
+# The observation radius for Mabuia is 3m, so the area is 28.27m2 or 0,002827ha
+ 
+pop[, areaHa := 0.002827]
+pop[, areaM2 := 28.27]
+pop[, densityHa := initialPop/areaHa]
+pop[, densityM2 := initialPop/areaM2]
+# 0.357 ± 0.170 individuals/m² (Vini's work) on secondary islands (0.187 - 0.527)
+
+# I won't deal with calculating the total abundance, not the proposal here! We want to see the change in 
+# lambda / population growth rate
+kvals <- c(20, 50, 100, 250, 500) # Min K is 13+1 (max observed number of indiv + 1) so we go between 20 and 500
+modK <- list()
+AICs <- numeric(5L)
+
+for (i in 1:5){
+  tic(paste0("Model with K ", kvals[i], " finished: "))
+ modK[[i]] <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                      gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
+                      omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                      pformula = ~scale(JulianDate)+observerID,
+                      data = mabuiaDF2,
+                      mixture = "ZIP", # Negative binomial
+                      dynamics = "trend", # We want the population trend through time
+                      immigration = FALSE,
+                      K = kvals[i])
+ toc()
+ AICs[i] <- modK[[i]]@AIC
+}
+names(modK) <- paste0("K_", kvals)
+
+
+ 
 
 ```
