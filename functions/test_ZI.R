@@ -18,8 +18,8 @@ test_ZI <- function(dts){
   test_stat <- numerator/denominator
   pvalue <- pchisq(test_stat,df=1, ncp=0, lower.tail=FALSE)
   if (pvalue < 0.05){
-    "Data likely zero inflated"
+    message("Data likely zero inflated")
   } else {
-    "Data likely not zero inflated"
+    message("Data likely not zero inflated")
   }
 }
