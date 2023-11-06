@@ -48,14 +48,12 @@ Data <- loadESData(dataLocation = "data/IPA.csv")
 We will start our analysis with the Mabuia (Noronha Skink; *Trachylepis atlantica*).   
 
 First we will run the models for the Ilha do Meio. For the mabuia, Negative 
-Binomial Models would have been appropriate, as these model counts, especially if there is variability 
-in the underlying rate of events. However, these are better suited for overdispersed data, which ours 
+Binomial Models would have been appropriate, as these model counts, especially if there is variability in the underlying rate of events. However, these are better suited for overdispersed data, which ours 
 isn't. Mabuia data is, however, Zero inflated. So ZIP models are more appropriate to use (see Kery, 
 2018 and Stoklosa et al. 2022). Moreover, the mabuia population is closed to immigration, considering 
 the island is not close enough to others to allow for the species to immigrate. As the predation rate 
-by 
-
-#TODO Make only one function for both places. The models explored need to be the same.
+by rats is high, we consider every sampling occasion as primary (i.e., open population) and add a 
+covariate for the time since the start of the eradication.
 
 ```{r mabuiaMeio}
 mabuiaMeio <- modelMabuia(DT = Data, island = "Ilha do Meio")
