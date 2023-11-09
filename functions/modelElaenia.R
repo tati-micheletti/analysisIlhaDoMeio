@@ -1,9 +1,9 @@
 ################################# ELAENIA ###########################
 
-modelElaenia <- function(DT, island, rerunModels = FALSE){
+modelElaenia <- function(DT, island, rerunModels = FALSE, reRunK = FALSE){
   # First we subset the data to the interested place and the species
   elenia <- DT[Island == island & Species == "Elaenia ridleyana",]
-  
+  area <- unique(elenia$Radius)
   # Drop what we don't need, or don't want: 
   # Island, Year, Month, Day, Species, Radius, Original_Landscape, originDate
   toRemove <- c("Island", "Year", "Month", "Day", "Species", 
@@ -108,7 +108,7 @@ modelElaenia <- function(DT, island, rerunModels = FALSE){
       message(paste0("The argument rerunModels = TRUE.", 
                      "Running the null models should not take too much time...")) else   
                        message(paste0("Null models for Elaenia on ", island, " haven't yet been run yet.",
-                                      "Running these models should not take too much time..."))
+                                      " Running these models should not take too much time..."))
     t0 <- Sys.time()
     nullP <- pcountOpen(lambdaformula = ~1,  # Initial abundance
                         gammaformula = ~1,  # Formula for population growth rate
@@ -154,7 +154,7 @@ modelElaenia <- function(DT, island, rerunModels = FALSE){
       message(paste0("The argument rerunModels = TRUE.", 
                      "Running the models will take some time...")) else   
                        message(paste0("Models for Elaenia ", island, " haven't yet been run yet.",
-                                      "Running the models will take some time..."))
+                                      " Running the models will take some time..."))
     t1 <- Sys.time()
     mod1 <- pcountOpen(lambdaformula = ~1,  # Initial abundance
                        gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
@@ -270,7 +270,7 @@ modelElaenia <- function(DT, island, rerunModels = FALSE){
     )
 
     elenia_models_time <- numeric(length(elenia_Models@fits))
-    for (m in 0:length(elenia_models_time)){
+    for (m in 0:(length(elenia_models_time)-1)){
       otm <- get(paste0("t", m+1))-get(paste0("t", m))
       tm <- as.numeric(otm)
       elenia_models_time[m+1] <- if (units(otm)=="secs")
@@ -293,7 +293,7 @@ modelElaenia <- function(DT, island, rerunModels = FALSE){
   modelSelected <- modSel(elenia_Models)
   Elaenia_best_model_name <- modelSelected@Full[1,"model"]
   Elaenia_best_model <- elenia_Models@fits[[Elaenia_best_model_name]]
-  
+
   # I won't deal with calculating the total abundance, not the proposal here! We want to see the change in 
   # lambda / population growth rate
   
@@ -305,26 +305,43 @@ modelElaenia <- function(DT, island, rerunModels = FALSE){
     elenia_best <- "./outputs/elenia_Rata_bestModel.qs"
   }
   kvals <- c(20, 50, 100, 250, 500, 600, 800) # Min K is 13+1 (max observed number of indiv + 1) so we go between 20 and 500
-  if (any(rerunModels, 
+  if (any(reRunK,
+          rerunModels, 
           !file.exists(elenia_best))){
-    if (rerunModels)
-      message(paste0("The argument rerunModels = TRUE.", 
+    if (any(reRunK, rerunModels))
+      message(paste0("The argument rerunModels = TRUE or rerunK = TRUE. ", 
                      "Running the models for for assessing K will take some time...")) else   
                        message(paste0("Models for for assessing K for Elaenia on Meio Island",
-                                      "haven't yet been run yet.",
-                                      "Running the models will take some time..."))
+                                      " haven't yet been run yet.",
+                                      " Running the models will take some time..."))
     elenia_bestModel <- list()
     for (i in 1:length(kvals)){
-      tic(paste0("Model with K ", kvals[i], " finished: "))
-      elenia_bestModel[[i]] <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
-                                               gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
-                                               omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
-                                               pformula = ~scale(JulianDate)+observerID,
-                                               data = eleniaDF2,
-                                               mixture = "ZIP", # Negative binomial
-                                               dynamics = "trend", # We want the population trend through time
-                                               immigration = TRUE,
-                                               K = kvals[i])
+      tic(paste0("Model with K ", kvals[i], " for ", island, " finished: "))
+      if (island == "Ilha do Meio"){
+        elenia_bestModel[[i]] <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                                            gammaformula = ~1,  # Formula for population growth rate
+                                            omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                                            pformula = ~1,
+                                            iotaformula = ~scale(timeSinceStartEradication)+scale(JulianDate),
+                                            data = eleniaDF,
+                                            starts = coef(Elaenia_best_model), # To help converge quicker, pass the best model's coefficients
+                                            mixture = "P", # Negative binomial
+                                            dynamics = "trend", # We want the population trend through time
+                                            immigration = TRUE,
+                                            K = kvals[i])
+      } else {
+        elenia_bestModel[[i]] <- pcountOpen(lambdaformula = ~1,  # Initial abundance
+                                            gammaformula = ~1,  # Formula for population growth rate
+                                            omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                                            pformula = ~1,
+                                            iotaformula = ~scale(JulianDate),
+                                            starts = coef(Elaenia_best_model),
+                                            data = eleniaDF,
+                                            mixture = "P", # Negative binomial
+                                            dynamics = "trend", # We want the population trend through time
+                                            immigration = TRUE,
+                                            K = kvals[i])
+      }
       toc()
     }
     names(elenia_bestModel) <- paste0("K_", kvals)
@@ -347,13 +364,14 @@ modelElaenia <- function(DT, island, rerunModels = FALSE){
   populationGrowthRate <- predict(Elaenia_best_model, type = "gamma")
   initialPopulation <- predict(obj = Elaenia_best_model, type = "lambda")
   detection <- predict(Elaenia_best_model, type = "det")
+  immigration <- predict(Elaenia_best_model, type = "iota")
   
   # Gamma (lambda --> population growth rate is increasing)
   pop <- unique(data.table(initialPop = predict(Elaenia_best_model, type = "lambda")[,1], 
                            cover = Elaenia_best_model@data@siteCovs[, "cover"]))
   
   # The observation radius for Elaenia is 3m, so the area is 28.27m2 or 0,002827ha
-  pop[, areaM2 := (pi*unique(elenia$Radius)^2)] # height*pi*observation radius^2 = observed area --> Observations were done in 3D, trees, rocks, bushes, etc.
+  pop[, areaM2 := (pi*area^2)] # height*pi*observation radius^2 = observed area --> Observations were done in 3D, trees, rocks, bushes, etc.
   pop[, densityM2 := initialPop/areaM2]
   # 0.357 ± 0.170 individuals/m² (Vini's work) on secondary islands (0.187 - 0.527)
   
@@ -363,6 +381,7 @@ modelElaenia <- function(DT, island, rerunModels = FALSE){
               allModels = elenia_Models,
               bestModelName = Elaenia_best_model_name,
               bestModel = Elaenia_best_model,
+              allKmodels = elenia_bestModel,
               Kplot = p,
               initialPopulation = initialPopulation,
               detectionProbability = detection,

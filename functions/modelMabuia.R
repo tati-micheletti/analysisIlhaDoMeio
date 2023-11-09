@@ -4,13 +4,23 @@ modelMabuia <- function(DT, island, rerunModels = FALSE){
 
   # First we subset the data to the interested place and the species
 Mabuia <- DT[Island == island & Species == "Trachylepis atlantica",]
-
+area <- unique(Mabuia$Radius)
 # Drop what we don't need, or don't want: 
 # Island, Year, Month, Day, Species, Radius, Original_Landscape, originDate
 toRemove <- c("Island", "Year", "Month", "Day", "Species", 
               "Radius", "Original_Landscape", "originDate",
-              "pointID", "transectID")
-Mabuia <- Mabuia[, (toRemove) := NULL]
+              "pointID", "transectID") # For mabuia in Rata, we need to use ponto_numero as site
+                                       # because there were mistakes in the table that were corrected
+                                       # by PM later.
+if (island == "Ilha Rata"){
+  toRemove <- c(toRemove, "site")
+  Mabuia <- Mabuia[, (toRemove) := NULL]
+  names(Mabuia)[names(Mabuia)=="ponto_numero"] <- "site"
+  Mabuia[, site := as.character(site)]
+} else {
+  toRemove <- c(toRemove, "ponto_numero")
+  Mabuia <- Mabuia[, (toRemove) := NULL]
+}
 
 # Now we make the needed objects:
 # y --> Matrix with observations where rows represent each site (unmarked calls this 'M'), and columns the 
@@ -48,8 +58,8 @@ obsCovs <- list(observerID = observerID,
 # other. This object is matrix where rows representing each site and the columns 
 # each covariate. 
 # Examples are: Cover (landscape type)
-if (island == "Ilha Rata") browser()
-cover <- data.frame(dcast(Mabuia, site ~ Date, value.var = "Landscape")[,2])
+cover <- data.frame(dcast(Mabuia, site ~ Date, value.var = "Landscape")[,4]) 
+#TODO Here I need to make sure all rows have information and then I can get whatever row
 names(cover) <- "cover"
 
 # numPrimary --> Number of primary periods
@@ -87,7 +97,7 @@ if (any(rerunModels, !file.exists(mabuia_nullModels_file))){
     message(paste0("The argument rerunModels = TRUE.", 
                    "Running the null models should not take too much time...")) else   
                      message(paste0("Null models for Mabuia on ", island," haven't yet been run yet.",
-                                    "Running these models should not take too much time..."))
+                                    " Running these models should not take too much time..."))
 t0 <- Sys.time()
 nullNB <- pcountOpen(lambdaformula = ~1,  # Initial abundance
                      gammaformula = ~1,  # Formula for population growth rate
@@ -132,7 +142,7 @@ if (any(rerunModels, !file.exists(mabuia_models))){
     message(paste0("The argument rerunModels = TRUE.", 
                    "Running the models will take some time...")) else   
       message(paste0("Models for Mabuia on ", island," haven't yet been run yet.",
-                     "Running the models will take some time..."))
+                     " Running the models will take some time..."))
 t1 <- Sys.time()
 mod1 <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
                    gammaformula = ~1,  # Formula for population growth rate
@@ -328,7 +338,7 @@ mabuia_Models <- fitList(
 )
 
 mabuia_models_time <- numeric(length(mabuia_Models@fits))
-for (m in 0:length(mabuia_models_time)){
+for (m in 0:(length(mabuia_models_time)-1)){
   otm <- get(paste0("t", m+1))-get(paste0("t", m))
   tm <- as.numeric(otm)
   mabuia_models_time[m+1] <- if (units(otm)=="secs")
@@ -376,6 +386,7 @@ if (any(rerunModels,
   mabuia_bestModel <- list()
   for (i in 1:length(kvals)){
     tic(paste0("Model with K ", kvals[i], " finished: "))
+    if (island == "Ilha do Meio"){
     mabuia_bestModel[[i]] <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
                                              gammaformula = ~scale(timeSinceStartEradication),  # Formula for population growth rate
                                              omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
@@ -385,6 +396,17 @@ if (any(rerunModels,
                                              dynamics = "trend", # We want the population trend through time
                                              immigration = FALSE,
                                              K = kvals[i])
+    } else {
+      mabuia_bestModel[[i]] <- pcountOpen(lambdaformula = ~cover,  # Initial abundance
+                                          gammaformula = ~1,  # Formula for population growth rate
+                                          omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                                          pformula = ~scale(JulianDate)+observerID,
+                                          data = mabuiaDF2,
+                                          mixture = "ZIP", # Negative binomial
+                                          dynamics = "trend", # We want the population trend through time
+                                          immigration = FALSE,
+                                          K = kvals[i])
+    }
     toc()
   }
   names(mabuia_bestModel) <- paste0("K_", kvals)
@@ -413,7 +435,7 @@ pop <- unique(data.table(initialPop = predict(mabuia_best_model, type = "lambda"
                          cover = mabuia_best_model@data@siteCovs[, "cover"]))
 
 # The observation radius for Mabuia is 3m, so the area is 28.27m2 or 0,002827ha
-pop[, areaM3 := (1*pi*unique(Mabuia$Radius)^2)] # height*pi*observation radius^2 = observed area --> Observations were done in 3D, trees, rocks, bushes, etc.
+pop[, areaM3 := (1*pi*area^2)] # height*pi*observation radius^2 = observed area --> Observations were done in 3D, trees, rocks, bushes, etc.
 pop[, densityM3 := initialPop/areaM3]
 # 0.357 ± 0.170 individuals/m² (Vini's work) on secondary islands (0.187 - 0.527)
 
@@ -423,6 +445,7 @@ return(list(IndividualModelRunTime = mabuia_models_time,
             allModels = mabuia_Models,
             bestModelName = mabuia_best_model_name,
             bestModel = mabuia_best_model,
+            allKmodels = mabuia_bestModel,
             Kplot = p,
             initialPopulation = initialPopulation,
             detectionProbability = detection,
