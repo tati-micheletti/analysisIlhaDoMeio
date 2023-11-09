@@ -67,12 +67,11 @@ mabuiaRata <- modelMabuia(DT = Data, island = "Ilha Rata")
 
 ## Elenia  
 
-Next, we will continue our analysis with the Noronha Elaenia (; *Trachylepis atlantica*). 
+Next, we will continue our analysis with the Cucuruta (Noronha Elaenia; **). 
 
 ```{r elaeniaRata}
-elaeniaMeio <- modelElaenia(DT = Data, island = "Ilha do Meio", rerunModels = TRUE)
-elaeniaRata <- modelElaenia(DT = Data, island = "Ilha Rata", rerunModels = TRUE)
-mabuiaRata <- modelMabuia(DT = Data, island = "Ilha Rata")
+elaeniaMeio <- modelElaenia(DT = Data, island = "Ilha do Meio")
+elaeniaRata <- modelElaenia(DT = Data, island = "Ilha Rata")
 ```
 
 First we will run the models for the Ilha do Meio. For the mabuia, Negative 
