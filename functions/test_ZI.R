@@ -19,7 +19,9 @@ test_ZI <- function(dts){
   pvalue <- pchisq(test_stat,df=1, ncp=0, lower.tail=FALSE)
   if (pvalue < 0.05){
     message("Data likely zero inflated")
+    return(TRUE)
   } else {
     message("Data likely not zero inflated")
+    return(FALSE)
   }
 }
