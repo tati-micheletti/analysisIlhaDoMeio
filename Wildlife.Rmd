@@ -126,7 +126,9 @@ and red-footed booby (*S. sula*) observations were performed only on Ilha do
 Meio (sites M1 and M2, respectively) (as colonies of these species are 
 in an inaccessible part of Ilha Rata). For masked booby (*S. dactylatra*), 
 however, surveys were performed in all breeding sites across the Ilha do Meio 
-(n = 7; sites M3 to M9), and on the only breeding site on Ilha Rata (site R1).
+(n = 7; sites M3 to M9), and on the only breeding site on Ilha Rata (site R1).  
+For seabirds, three counts were made: adults, chicks and nests with eggs. We used 
+the same 
 
 ```{r loadAndCheckData}
 Data <- loadSBData(dataLocation = "data/CENSUS.csv")
@@ -134,5 +136,8 @@ Data <- loadSBData(dataLocation = "data/CENSUS.csv")
 
 ##  Brown Booby  (and Sula sula)
 
-To perform the ana The analysis of the Atoba-Marrom (brown bobby; *Sula 
-leucogaster*) was then performed. This ...
+To perform the analysis of the Atoba-Marrom (brown bobby; *Sula leucogaster*), 
+as well as for the other two seabird species, we pulled together the information 
+on chicks (summed the individuals at all stages) and performed a separate analysis 
+for chicks and adults.
+
