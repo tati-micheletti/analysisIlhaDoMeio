@@ -2,7 +2,6 @@
 
 loadSBData <- function(dataLocation){
   DT <- fread(dataLocation)
-  browser()
   DT[, "Date" :=  as.Date(with(DT,paste(Year,Month,Day,sep="-")),"%Y-%m-%d")]
   DT[, "originDate" :=  as.Date(paste(Year,1,1,sep="-"),"%Y-%m-%d")]
   julDate <- rbindlist(lapply(X = 1:NROW(DT), function(rid){
