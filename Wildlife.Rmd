@@ -34,13 +34,22 @@ for (fl in allFls){
 }
 ```
 
-## Endangered land species
+## Species modeling
 
-Then we load the data and format the information we need for the models. The `IPA.csv` file contains 
-all data for the endangered species. Sea birds' data are hosted in another file, loaded below.
+After loading libraries and sourcing needed functions, we load the data and 
+format the information we need for the models. The 
+`dataCOUNTS.csv` file contains all data for the endangered species. For all species, 
+we used the N-mixture model described by Dail and Madsen (2011), which has been 
+incorporated into the R package `unmarked`. This model, ran using the function 
+`pcountOpen()`, allows for model formulations to identify population trends, 
+with and without immigration, and for covariates on initial population (described 
+as lambda in the model), population growth (gamma), observation probabilities 
+(p) and immigration (iota), when this is considered. This model was chosen as it
+could be used for all species, as it also allows for different distributions 
+(i.e., Poisson, Negative Binomial and Zero Inflated). 
 
 ```{r loadAndCheckData}
-Data <- loadESData(dataLocation = "data/IPA.csv")
+Data <- loadESData(dataLocation = "data/dataCOUNTS.csv")
 ```
 
 ## Mabuia  
@@ -56,13 +65,15 @@ by rats is high, we consider every sampling occasion as primary (i.e., open popu
 covariate for the time since the start of the eradication.
 
 ```{r mabuiaMeio}
-mabuiaMeio <- modelTerrestrials(DT = Data, island = "Ilha do Meio", species = "Trachylepis atlantica")
+mabuiaMeio <- modelTerrestrials(DT = Data, island = "Ilha do Meio", 
+                                species = "Trachylepis atlantica")
 ```
 
 Now we will run the models for Mabuia for Ilha Rata (our control). 
 
 ```{r mabuiaRata}
-mabuiaRata <- modelTerrestrials(DT = Data, island = "Ilha Rata", species = "Trachylepis atlantica")
+mabuiaRata <- modelTerrestrials(DT = Data, island = "Ilha Rata", 
+                                species = "Trachylepis atlantica")
 ```
 
 It is important to notice that a couple of the alternative models did not converge 
@@ -84,13 +95,15 @@ primary sampling occasions (several weeks apart). First we ran the models for th
 island:  
 
 ```{r elaeniaMeio}
-elaeniaMeio <- modelTerrestrials(DT = Data, island = "Ilha do Meio", species = "Elaenia ridleyana")
+elaeniaMeio <- modelTerrestrials(DT = Data, island = "Ilha do Meio", 
+                                 species = "Elaenia ridleyana")
 ```
 
 And then for the Rata island:  
 
 ```{r elaeniaRata}
-elaeniaRata <- modelTerrestrials(DT = Data, island = "Ilha Rata", species = "Elaenia ridleyana")
+elaeniaRata <- modelTerrestrials(DT = Data, island = "Ilha Rata", 
+                                 species = "Elaenia ridleyana")
 ```
 
 ## Land Crab  
@@ -107,37 +120,40 @@ the NB model presented a smaller AIC, the dispersion parameter was not significa
 while the zero inflation was in the ZIP model. Therefore, we opted for a ZIP model.
 
 ```{r crabMeio}
-crabMeio <- modelCrab(DT = Data, island = "Ilha do Meio", species = "Johngarthia lagostoma")
+crabMeio <- modelTerrestrials(DT = Data, island = "Ilha do Meio", 
+                              species = "Johngarthia lagostoma")
 ```
 
 After modelling crabs for the Ilha do Meio, we perform the same analysis for Ilha Rata:
 
 ```{r crabRata}
-crabRata <- modelCrab(DT = Data, island = "Ilha Rata", species = "Johngarthia lagostoma")
+crabRata <- modelTerrestrials(DT = Data, island = "Ilha Rata", 
+                              species = "Johngarthia lagostoma")
 ```
 
-## Endangered seabird species
+## Masked Booby
 
-To perform the analysis for seabirds (*Sula ssp.*), we need to load the data from another file. 
-The `CENSUS.csv` file contains all data for sea birds'. For all sea bird species, 
-only one survey was done per primary occasion, following current monitoring 
-protocols in place. For brown booby (*S. leucogaster*) 
-and red-footed booby (*S. sula*) observations were performed only on Ilha do 
-Meio (sites M1 and M2, respectively) (as colonies of these species are 
-in an inaccessible part of Ilha Rata). For masked booby (*S. dactylatra*), 
-however, surveys were performed in all breeding sites across the Ilha do Meio 
-(n = 7; sites M3 to M9), and on the only breeding site on Ilha Rata (site R1).  
-For seabirds, three counts were made: adults, chicks and nests with eggs. We used 
-the same 
+To perform the analysis for a seabird species, the Atoba Mascarado (masked booby; 
+*Sula dactylatra*), surveys were performed in all breeding sites across the Ilha 
+do Meio (n = 7), and on the only breeding site on Ilha Rata. We used adult counts 
+as a proxy for breeding site quality.  
 
-```{r loadAndCheckData}
-Data <- loadSBData(dataLocation = "data/CENSUS.csv")
+```{r crabMeio}
+maskedBoobyMeio <- modelTerrestrials(DT = Data, island = "Ilha do Meio", 
+                                     species = "Sula dactylatra")
 ```
 
-##  Brown Booby  (and Sula sula)
+After modelling crabs for the Ilha do Meio, we perform the same analysis for Ilha Rata:
 
-To perform the analysis of the Atoba-Marrom (brown bobby; *Sula leucogaster*), 
-as well as for the other two seabird species, we pulled together the information 
-on chicks (summed the individuals at all stages) and performed a separate analysis 
-for chicks and adults.
+```{r crabRata}
+maskedBoobyRata <- modelTerrestrials(DT = Data, island = "Ilha Rata", 
+                                     species = "Sula dactylatra")
+```
+
+Now that the models were constructed, we need to calculate the change in population 
+density through time for Ilha do Meio, and compare it to the control area (Ilha 
+Rata).
+
+At last, we build a plot to show the difference in density through time in function 
+of time since eradication (TSE).
 
