@@ -1,281 +1,121 @@
-Island,Year,Month,Day,Species,Counts,Variable,Site
-Ilha do Meio,2017,7,31,Sula leucogaster,18,Adults,M1
-Ilha do Meio,2017,7,31,Sula leucogaster,0,Nests with Eggs,M1
-Ilha do Meio,2017,7,31,Sula leucogaster,0,Chicks Stage I,M1
-Ilha do Meio,2017,7,31,Sula leucogaster,1,Chicks Stage II,M1
-Ilha do Meio,2017,7,31,Sula leucogaster,0,Chicks Stage III,M1
-Ilha do Meio,2017,7,31,Sula leucogaster,0,Chicks Stage IV,M1
-Ilha do Meio,2017,7,31,Sula leucogaster,3,Chicks Stage V,M1
-Ilha do Meio,2017,10,15,Sula leucogaster,26,Adults,M1
-Ilha do Meio,2017,10,15,Sula leucogaster,23,Nests with Eggs,M1
-Ilha do Meio,2017,10,15,Sula leucogaster,1,Chicks Stage I,M1
-Ilha do Meio,2017,10,15,Sula leucogaster,0,Chicks Stage II,M1
-Ilha do Meio,2017,10,15,Sula leucogaster,0,Chicks Stage III,M1
-Ilha do Meio,2017,10,15,Sula leucogaster,0,Chicks Stage IV,M1
-Ilha do Meio,2017,10,15,Sula leucogaster,0,Chicks Stage V,M1
-Ilha do Meio,2018,2,1,Sula leucogaster,32,Adults,M1
-Ilha do Meio,2018,2,1,Sula leucogaster,15,Nests with Eggs,M1
-Ilha do Meio,2018,2,1,Sula leucogaster,3,Chicks Stage I,M1
-Ilha do Meio,2018,2,1,Sula leucogaster,6,Chicks Stage II,M1
-Ilha do Meio,2018,2,1,Sula leucogaster,28,Chicks Stage III,M1
-Ilha do Meio,2018,2,1,Sula leucogaster,0,Chicks Stage IV,M1
-Ilha do Meio,2018,2,1,Sula leucogaster,0,Chicks Stage V,M1
-Ilha do Meio,2018,4,14,Sula leucogaster,50,Adults,M1
-Ilha do Meio,2018,4,14,Sula leucogaster,34,Nests with Eggs,M1
-Ilha do Meio,2018,4,14,Sula leucogaster,0,Chicks Stage I,M1
-Ilha do Meio,2018,4,14,Sula leucogaster,0,Chicks Stage II,M1
-Ilha do Meio,2018,4,14,Sula leucogaster,3,Chicks Stage III,M1
-Ilha do Meio,2018,4,14,Sula leucogaster,1,Chicks Stage IV,M1
-Ilha do Meio,2018,4,14,Sula leucogaster,1,Chicks Stage V,M1
-Ilha do Meio,2017,8,8,Sula sula,135,Adults,M2
-Ilha do Meio,2017,8,8,Sula sula,72,Nests with Eggs,M2
-Ilha do Meio,2017,8,8,Sula sula,0,Chicks Stage I,M2
-Ilha do Meio,2017,8,8,Sula sula,0,Chicks Stage II,M2
-Ilha do Meio,2017,8,8,Sula sula,0,Chicks Stage III,M2
-Ilha do Meio,2017,8,8,Sula sula,3,Chicks Stage IV,M2
-Ilha do Meio,2017,8,8,Sula sula,1,Chicks Stage V,M2
-Ilha do Meio,2017,10,18,Sula sula,71,Adults,M2
-Ilha do Meio,2017,10,18,Sula sula,51,Nests with Eggs,M2
-Ilha do Meio,2017,10,18,Sula sula,0,Chicks Stage I,M2
-Ilha do Meio,2017,10,18,Sula sula,4,Chicks Stage II,M2
-Ilha do Meio,2017,10,18,Sula sula,27,Chicks Stage III,M2
-Ilha do Meio,2017,10,18,Sula sula,1,Chicks Stage IV,M2
-Ilha do Meio,2017,10,18,Sula sula,0,Chicks Stage V,M2
-Ilha do Meio,2018,2,2,Sula sula,106,Adults,M2
-Ilha do Meio,2018,2,2,Sula sula,65,Nests with Eggs,M2
-Ilha do Meio,2018,2,2,Sula sula,0,Chicks Stage I,M2
-Ilha do Meio,2018,2,2,Sula sula,6,Chicks Stage II,M2
-Ilha do Meio,2018,2,2,Sula sula,1,Chicks Stage III,M2
-Ilha do Meio,2018,2,2,Sula sula,3,Chicks Stage IV,M2
-Ilha do Meio,2018,2,2,Sula sula,13,Chicks Stage V,M2
-Ilha do Meio,2018,4,20,Sula sula,134,Adults,M2
-Ilha do Meio,2018,4,20,Sula sula,3,Nests with Eggs,M2
-Ilha do Meio,2018,4,20,Sula sula,0,Chicks Stage I,M2
-Ilha do Meio,2018,4,20,Sula sula,0,Chicks Stage II,M2
-Ilha do Meio,2018,4,20,Sula sula,7,Chicks Stage III,M2
-Ilha do Meio,2018,4,20,Sula sula,2,Chicks Stage IV,M2
-Ilha do Meio,2018,4,20,Sula sula,1,Chicks Stage V,M2
-Ilha do Meio,2017,7,31,Sula dactylatra,94,Adults,M3
-Ilha do Meio,2017,7,31,Sula dactylatra,1,Nests with Eggs,M3
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage I,M3
-Ilha do Meio,2017,7,31,Sula dactylatra,1,Chicks Stage II,M3
-Ilha do Meio,2017,7,31,Sula dactylatra,1,Chicks Stage III,M3
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage IV,M3
-Ilha do Meio,2017,7,31,Sula dactylatra,20,Chicks Stage V,M3
-Ilha do Meio,2017,7,31,Sula dactylatra,38,Adults,M4
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Nests with Eggs,M4
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage I,M4
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage II,M4
-Ilha do Meio,2017,7,31,Sula dactylatra,3,Chicks Stage III,M4
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage IV,M4
-Ilha do Meio,2017,7,31,Sula dactylatra,10,Chicks Stage V,M4
-Ilha do Meio,2017,7,31,Sula dactylatra,33,Adults,M5
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Nests with Eggs,M5
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage I,M5
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage II,M5
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage III,M5
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage IV,M5
-Ilha do Meio,2017,7,31,Sula dactylatra,6,Chicks Stage V,M5
-Ilha do Meio,2017,7,31,Sula dactylatra,24,Adults,M6
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Nests with Eggs,M6
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage I,M6
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage II,M6
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage III,M6
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage IV,M6
-Ilha do Meio,2017,7,31,Sula dactylatra,1,Chicks Stage V,M6
-Ilha do Meio,2017,7,31,Sula dactylatra,47,Adults,M7
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Nests with Eggs,M7
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage I,M7
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage II,M7
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage III,M7
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage IV,M7
-Ilha do Meio,2017,7,31,Sula dactylatra,9,Chicks Stage V,M7
-Ilha do Meio,2017,7,31,Sula dactylatra,23,Adults,M8
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Nests with Eggs,M8
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage I,M8
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage II,M8
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage III,M8
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage IV,M8
-Ilha do Meio,2017,7,31,Sula dactylatra,5,Chicks Stage V,M8
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Adults,M9
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Nests with Eggs,M9
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage I,M9
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage II,M9
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage III,M9
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage IV,M9
-Ilha do Meio,2017,7,31,Sula dactylatra,0,Chicks Stage V,M9
-Ilha do Meio,2017,10,15,Sula dactylatra,39,Adults,M3
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Nests with Eggs,M3
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage I,M3
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage II,M3
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage III,M3
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage IV,M3
-Ilha do Meio,2017,10,15,Sula dactylatra,5,Chicks Stage V,M3
-Ilha do Meio,2017,10,15,Sula dactylatra,56,Adults,M4
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Nests with Eggs,M4
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage I,M4
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage II,M4
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage III,M4
-Ilha do Meio,2017,10,15,Sula dactylatra,1,Chicks Stage IV,M4
-Ilha do Meio,2017,10,15,Sula dactylatra,1,Chicks Stage V,M4
-Ilha do Meio,2017,10,15,Sula dactylatra,54,Adults,M5
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Nests with Eggs,M5
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage I,M5
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage II,M5
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage III,M5
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage IV,M5
-Ilha do Meio,2017,10,15,Sula dactylatra,1,Chicks Stage V,M5
-Ilha do Meio,2017,10,15,Sula dactylatra,32,Adults,M6
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Nests with Eggs,M6
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage I,M6
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage II,M6
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage III,M6
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage IV,M6
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage V,M6
-Ilha do Meio,2017,10,15,Sula dactylatra,60,Adults,M7
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Nests with Eggs,M7
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage I,M7
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage II,M7
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage III,M7
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage IV,M7
-Ilha do Meio,2017,10,15,Sula dactylatra,1,Chicks Stage V,M7
-Ilha do Meio,2017,10,15,Sula dactylatra,27,Adults,M8
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Nests with Eggs,M8
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage I,M8
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage II,M8
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage III,M8
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage IV,M8
-Ilha do Meio,2017,10,15,Sula dactylatra,1,Chicks Stage V,M8
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Adults,M9
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Nests with Eggs,M9
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage I,M9
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage II,M9
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage III,M9
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage IV,M9
-Ilha do Meio,2017,10,15,Sula dactylatra,0,Chicks Stage V,M9
-Ilha do Meio,2018,2,1,Sula dactylatra,100,Adults,M3
-Ilha do Meio,2018,2,1,Sula dactylatra,1,Nests with Eggs,M3
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage I,M3
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage II,M3
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage III,M3
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage IV,M3
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage V,M3
-Ilha do Meio,2018,2,1,Sula dactylatra,90,Adults,M4
-Ilha do Meio,2018,2,1,Sula dactylatra,8,Nests with Eggs,M4
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage I,M4
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage II,M4
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage III,M4
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage IV,M4
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage V,M4
-Ilha do Meio,2018,2,1,Sula dactylatra,27,Adults,M5
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Nests with Eggs,M5
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage I,M5
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage II,M5
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage III,M5
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage IV,M5
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage V,M5
-Ilha do Meio,2018,2,1,Sula dactylatra,79,Adults,M6
-Ilha do Meio,2018,2,1,Sula dactylatra,1,Nests with Eggs,M6
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage I,M6
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage II,M6
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage III,M6
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage IV,M6
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage V,M6
-Ilha do Meio,2018,2,1,Sula dactylatra,83,Adults,M7
-Ilha do Meio,2018,2,1,Sula dactylatra,7,Nests with Eggs,M7
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage I,M7
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage II,M7
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage III,M7
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage IV,M7
-Ilha do Meio,2018,2,1,Sula dactylatra,1,Chicks Stage V,M7
-Ilha do Meio,2018,2,1,Sula dactylatra,41,Adults,M8
-Ilha do Meio,2018,2,1,Sula dactylatra,2,Nests with Eggs,M8
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage I,M8
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage II,M8
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage III,M8
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage IV,M8
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage V,M8
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Adults,M9
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Nests with Eggs,M9
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage I,M9
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage II,M9
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage III,M9
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage IV,M9
-Ilha do Meio,2018,2,1,Sula dactylatra,0,Chicks Stage V,M9
-Ilha do Meio,2018,4,14,Sula dactylatra,69,Adults,M3
-Ilha do Meio,2018,4,14,Sula dactylatra,30,Nests with Eggs,M3
-Ilha do Meio,2018,4,14,Sula dactylatra,7,Chicks Stage I,M3
-Ilha do Meio,2018,4,14,Sula dactylatra,6,Chicks Stage II,M3
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage III,M3
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage IV,M3
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage V,M3
-Ilha do Meio,2018,4,14,Sula dactylatra,67,Adults,M4
-Ilha do Meio,2018,4,14,Sula dactylatra,39,Nests with Eggs,M4
-Ilha do Meio,2018,4,14,Sula dactylatra,10,Chicks Stage I,M4
-Ilha do Meio,2018,4,14,Sula dactylatra,4,Chicks Stage II,M4
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage III,M4
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage IV,M4
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage V,M4
-Ilha do Meio,2018,4,14,Sula dactylatra,37,Adults,M5
-Ilha do Meio,2018,4,14,Sula dactylatra,1,Nests with Eggs,M5
-Ilha do Meio,2018,4,14,Sula dactylatra,1,Chicks Stage I,M5
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage II,M5
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage III,M5
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage IV,M5
-Ilha do Meio,2018,4,14,Sula dactylatra,2,Chicks Stage V,M5
-Ilha do Meio,2018,4,14,Sula dactylatra,88,Adults,M6
-Ilha do Meio,2018,4,14,Sula dactylatra,56,Nests with Eggs,M6
-Ilha do Meio,2018,4,14,Sula dactylatra,8,Chicks Stage I,M6
-Ilha do Meio,2018,4,14,Sula dactylatra,5,Chicks Stage II,M6
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage III,M6
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage IV,M6
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage V,M6
-Ilha do Meio,2018,4,14,Sula dactylatra,147,Adults,M7
-Ilha do Meio,2018,4,14,Sula dactylatra,95,Nests with Eggs,M7
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage I,M7
-Ilha do Meio,2018,4,14,Sula dactylatra,4,Chicks Stage II,M7
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage III,M7
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage IV,M7
-Ilha do Meio,2018,4,14,Sula dactylatra,2,Chicks Stage V,M7
-Ilha do Meio,2018,4,14,Sula dactylatra,52,Adults,M8
-Ilha do Meio,2018,4,14,Sula dactylatra,35,Nests with Eggs,M8
-Ilha do Meio,2018,4,14,Sula dactylatra,4,Chicks Stage I,M8
-Ilha do Meio,2018,4,14,Sula dactylatra,1,Chicks Stage II,M8
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage III,M8
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage IV,M8
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage V,M8
-Ilha do Meio,2018,4,14,Sula dactylatra,65,Adults,M9
-Ilha do Meio,2018,4,14,Sula dactylatra,55,Nests with Eggs,M9
-Ilha do Meio,2018,4,14,Sula dactylatra,5,Chicks Stage I,M9
-Ilha do Meio,2018,4,14,Sula dactylatra,1,Chicks Stage II,M9
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage III,M9
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage IV,M9
-Ilha do Meio,2018,4,14,Sula dactylatra,0,Chicks Stage V,M9
-Ilha Rata,2017,8,1,Sula dactylatra,137,Adults,R1
-Ilha Rata,2017,8,1,Sula dactylatra,0,Nests with Eggs,R1
-Ilha Rata,2017,8,1,Sula dactylatra,0,Chicks Stage I,R1
-Ilha Rata,2017,8,1,Sula dactylatra,1,Chicks Stage II,R1
-Ilha Rata,2017,8,1,Sula dactylatra,1,Chicks Stage III,R1
-Ilha Rata,2017,8,1,Sula dactylatra,0,Chicks Stage IV,R1
-Ilha Rata,2017,8,1,Sula dactylatra,23,Chicks Stage V,R1
-Ilha Rata,2017,10,19,Sula dactylatra,59,Adults,R1
-Ilha Rata,2017,10,19,Sula dactylatra,0,Nests with Eggs,R1
-Ilha Rata,2017,10,19,Sula dactylatra,0,Chicks Stage I,R1
-Ilha Rata,2017,10,19,Sula dactylatra,0,Chicks Stage II,R1
-Ilha Rata,2017,10,19,Sula dactylatra,0,Chicks Stage III,R1
-Ilha Rata,2017,10,19,Sula dactylatra,0,Chicks Stage IV,R1
-Ilha Rata,2017,10,19,Sula dactylatra,5,Chicks Stage V,R1
-Ilha Rata,2018,1,31,Sula dactylatra,147,Adults,R1
-Ilha Rata,2018,1,31,Sula dactylatra,8,Nests with Eggs,R1
-Ilha Rata,2018,1,31,Sula dactylatra,0,Chicks Stage I,R1
-Ilha Rata,2018,1,31,Sula dactylatra,0,Chicks Stage II,R1
-Ilha Rata,2018,1,31,Sula dactylatra,0,Chicks Stage III,R1
-Ilha Rata,2018,1,31,Sula dactylatra,0,Chicks Stage IV,R1
-Ilha Rata,2018,1,31,Sula dactylatra,0,Chicks Stage V,R1
-Ilha Rata,2018,4,17,Sula dactylatra,251,Adults,R1
-Ilha Rata,2018,4,17,Sula dactylatra,172,Nests with Eggs,R1
-Ilha Rata,2018,4,17,Sula dactylatra,41,Chicks Stage I,R1
-Ilha Rata,2018,4,17,Sula dactylatra,26,Chicks Stage II,R1
-Ilha Rata,2018,4,17,Sula dactylatra,0,Chicks Stage III,R1
-Ilha Rata,2018,4,17,Sula dactylatra,0,Chicks Stage IV,R1
-Ilha Rata,2018,4,17,Sula dactylatra,0,Chicks Stage V,R1
+"","Island","Year","Month","Day","Species","Counts","Variable","Site"
+"1","Ilha do Meio",2017,7,31,"Sula leucogaster",4,"Chicks","M1"
+"2","Ilha do Meio",2017,10,15,"Sula leucogaster",1,"Chicks","M1"
+"3","Ilha do Meio",2018,2,1,"Sula leucogaster",37,"Chicks","M1"
+"4","Ilha do Meio",2018,4,14,"Sula leucogaster",5,"Chicks","M1"
+"5","Ilha do Meio",2017,8,8,"Sula sula",4,"Chicks","M2"
+"6","Ilha do Meio",2017,10,18,"Sula sula",32,"Chicks","M2"
+"7","Ilha do Meio",2018,2,2,"Sula sula",23,"Chicks","M2"
+"8","Ilha do Meio",2018,4,20,"Sula sula",10,"Chicks","M2"
+"9","Ilha do Meio",2017,7,31,"Sula dactylatra",22,"Chicks","M3"
+"10","Ilha do Meio",2017,7,31,"Sula dactylatra",13,"Chicks","M4"
+"11","Ilha do Meio",2017,7,31,"Sula dactylatra",6,"Chicks","M5"
+"12","Ilha do Meio",2017,7,31,"Sula dactylatra",1,"Chicks","M6"
+"13","Ilha do Meio",2017,7,31,"Sula dactylatra",9,"Chicks","M7"
+"14","Ilha do Meio",2017,7,31,"Sula dactylatra",5,"Chicks","M8"
+"15","Ilha do Meio",2017,7,31,"Sula dactylatra",0,"Chicks","M9"
+"16","Ilha do Meio",2017,10,15,"Sula dactylatra",5,"Chicks","M3"
+"17","Ilha do Meio",2017,10,15,"Sula dactylatra",2,"Chicks","M4"
+"18","Ilha do Meio",2017,10,15,"Sula dactylatra",1,"Chicks","M5"
+"19","Ilha do Meio",2017,10,15,"Sula dactylatra",0,"Chicks","M6"
+"20","Ilha do Meio",2017,10,15,"Sula dactylatra",1,"Chicks","M7"
+"21","Ilha do Meio",2017,10,15,"Sula dactylatra",1,"Chicks","M8"
+"22","Ilha do Meio",2017,10,15,"Sula dactylatra",0,"Chicks","M9"
+"23","Ilha do Meio",2018,2,1,"Sula dactylatra",0,"Chicks","M3"
+"24","Ilha do Meio",2018,2,1,"Sula dactylatra",0,"Chicks","M4"
+"25","Ilha do Meio",2018,2,1,"Sula dactylatra",0,"Chicks","M5"
+"26","Ilha do Meio",2018,2,1,"Sula dactylatra",0,"Chicks","M6"
+"27","Ilha do Meio",2018,2,1,"Sula dactylatra",1,"Chicks","M7"
+"28","Ilha do Meio",2018,2,1,"Sula dactylatra",0,"Chicks","M8"
+"29","Ilha do Meio",2018,2,1,"Sula dactylatra",0,"Chicks","M9"
+"30","Ilha do Meio",2018,4,14,"Sula dactylatra",13,"Chicks","M3"
+"31","Ilha do Meio",2018,4,14,"Sula dactylatra",14,"Chicks","M4"
+"32","Ilha do Meio",2018,4,14,"Sula dactylatra",3,"Chicks","M5"
+"33","Ilha do Meio",2018,4,14,"Sula dactylatra",13,"Chicks","M6"
+"34","Ilha do Meio",2018,4,14,"Sula dactylatra",6,"Chicks","M7"
+"35","Ilha do Meio",2018,4,14,"Sula dactylatra",5,"Chicks","M8"
+"36","Ilha do Meio",2018,4,14,"Sula dactylatra",6,"Chicks","M9"
+"37","Ilha Rata",2017,8,1,"Sula dactylatra",25,"Chicks","R1"
+"38","Ilha Rata",2017,10,19,"Sula dactylatra",5,"Chicks","R1"
+"39","Ilha Rata",2018,1,31,"Sula dactylatra",0,"Chicks","R1"
+"40","Ilha Rata",2018,4,17,"Sula dactylatra",67,"Chicks","R1"
+"41","Ilha do Meio",2017,7,31,"Sula leucogaster",18,"Adults","M1"
+"42","Ilha do Meio",2017,7,31,"Sula leucogaster",0,"Nests with Eggs","M1"
+"43","Ilha do Meio",2017,10,15,"Sula leucogaster",26,"Adults","M1"
+"44","Ilha do Meio",2017,10,15,"Sula leucogaster",23,"Nests with Eggs","M1"
+"45","Ilha do Meio",2018,2,1,"Sula leucogaster",32,"Adults","M1"
+"46","Ilha do Meio",2018,2,1,"Sula leucogaster",15,"Nests with Eggs","M1"
+"47","Ilha do Meio",2018,4,14,"Sula leucogaster",50,"Adults","M1"
+"48","Ilha do Meio",2018,4,14,"Sula leucogaster",34,"Nests with Eggs","M1"
+"49","Ilha do Meio",2017,8,8,"Sula sula",135,"Adults","M2"
+"50","Ilha do Meio",2017,8,8,"Sula sula",72,"Nests with Eggs","M2"
+"51","Ilha do Meio",2017,10,18,"Sula sula",71,"Adults","M2"
+"52","Ilha do Meio",2017,10,18,"Sula sula",51,"Nests with Eggs","M2"
+"53","Ilha do Meio",2018,2,2,"Sula sula",106,"Adults","M2"
+"54","Ilha do Meio",2018,2,2,"Sula sula",65,"Nests with Eggs","M2"
+"55","Ilha do Meio",2018,4,20,"Sula sula",134,"Adults","M2"
+"56","Ilha do Meio",2018,4,20,"Sula sula",3,"Nests with Eggs","M2"
+"57","Ilha do Meio",2017,7,31,"Sula dactylatra",94,"Adults","M3"
+"58","Ilha do Meio",2017,7,31,"Sula dactylatra",1,"Nests with Eggs","M3"
+"59","Ilha do Meio",2017,7,31,"Sula dactylatra",38,"Adults","M4"
+"60","Ilha do Meio",2017,7,31,"Sula dactylatra",0,"Nests with Eggs","M4"
+"61","Ilha do Meio",2017,7,31,"Sula dactylatra",33,"Adults","M5"
+"62","Ilha do Meio",2017,7,31,"Sula dactylatra",0,"Nests with Eggs","M5"
+"63","Ilha do Meio",2017,7,31,"Sula dactylatra",24,"Adults","M6"
+"64","Ilha do Meio",2017,7,31,"Sula dactylatra",0,"Nests with Eggs","M6"
+"65","Ilha do Meio",2017,7,31,"Sula dactylatra",47,"Adults","M7"
+"66","Ilha do Meio",2017,7,31,"Sula dactylatra",0,"Nests with Eggs","M7"
+"67","Ilha do Meio",2017,7,31,"Sula dactylatra",23,"Adults","M8"
+"68","Ilha do Meio",2017,7,31,"Sula dactylatra",0,"Nests with Eggs","M8"
+"69","Ilha do Meio",2017,7,31,"Sula dactylatra",0,"Adults","M9"
+"70","Ilha do Meio",2017,7,31,"Sula dactylatra",0,"Nests with Eggs","M9"
+"71","Ilha do Meio",2017,10,15,"Sula dactylatra",39,"Adults","M3"
+"72","Ilha do Meio",2017,10,15,"Sula dactylatra",0,"Nests with Eggs","M3"
+"73","Ilha do Meio",2017,10,15,"Sula dactylatra",56,"Adults","M4"
+"74","Ilha do Meio",2017,10,15,"Sula dactylatra",0,"Nests with Eggs","M4"
+"75","Ilha do Meio",2017,10,15,"Sula dactylatra",54,"Adults","M5"
+"76","Ilha do Meio",2017,10,15,"Sula dactylatra",0,"Nests with Eggs","M5"
+"77","Ilha do Meio",2017,10,15,"Sula dactylatra",32,"Adults","M6"
+"78","Ilha do Meio",2017,10,15,"Sula dactylatra",0,"Nests with Eggs","M6"
+"79","Ilha do Meio",2017,10,15,"Sula dactylatra",60,"Adults","M7"
+"80","Ilha do Meio",2017,10,15,"Sula dactylatra",0,"Nests with Eggs","M7"
+"81","Ilha do Meio",2017,10,15,"Sula dactylatra",27,"Adults","M8"
+"82","Ilha do Meio",2017,10,15,"Sula dactylatra",0,"Nests with Eggs","M8"
+"83","Ilha do Meio",2017,10,15,"Sula dactylatra",0,"Adults","M9"
+"84","Ilha do Meio",2017,10,15,"Sula dactylatra",0,"Nests with Eggs","M9"
+"85","Ilha do Meio",2018,2,1,"Sula dactylatra",100,"Adults","M3"
+"86","Ilha do Meio",2018,2,1,"Sula dactylatra",1,"Nests with Eggs","M3"
+"87","Ilha do Meio",2018,2,1,"Sula dactylatra",90,"Adults","M4"
+"88","Ilha do Meio",2018,2,1,"Sula dactylatra",8,"Nests with Eggs","M4"
+"89","Ilha do Meio",2018,2,1,"Sula dactylatra",27,"Adults","M5"
+"90","Ilha do Meio",2018,2,1,"Sula dactylatra",0,"Nests with Eggs","M5"
+"91","Ilha do Meio",2018,2,1,"Sula dactylatra",79,"Adults","M6"
+"92","Ilha do Meio",2018,2,1,"Sula dactylatra",1,"Nests with Eggs","M6"
+"93","Ilha do Meio",2018,2,1,"Sula dactylatra",83,"Adults","M7"
+"94","Ilha do Meio",2018,2,1,"Sula dactylatra",7,"Nests with Eggs","M7"
+"95","Ilha do Meio",2018,2,1,"Sula dactylatra",41,"Adults","M8"
+"96","Ilha do Meio",2018,2,1,"Sula dactylatra",2,"Nests with Eggs","M8"
+"97","Ilha do Meio",2018,2,1,"Sula dactylatra",0,"Adults","M9"
+"98","Ilha do Meio",2018,2,1,"Sula dactylatra",0,"Nests with Eggs","M9"
+"99","Ilha do Meio",2018,4,14,"Sula dactylatra",69,"Adults","M3"
+"100","Ilha do Meio",2018,4,14,"Sula dactylatra",30,"Nests with Eggs","M3"
+"101","Ilha do Meio",2018,4,14,"Sula dactylatra",67,"Adults","M4"
+"102","Ilha do Meio",2018,4,14,"Sula dactylatra",39,"Nests with Eggs","M4"
+"103","Ilha do Meio",2018,4,14,"Sula dactylatra",37,"Adults","M5"
+"104","Ilha do Meio",2018,4,14,"Sula dactylatra",1,"Nests with Eggs","M5"
+"105","Ilha do Meio",2018,4,14,"Sula dactylatra",88,"Adults","M6"
+"106","Ilha do Meio",2018,4,14,"Sula dactylatra",56,"Nests with Eggs","M6"
+"107","Ilha do Meio",2018,4,14,"Sula dactylatra",147,"Adults","M7"
+"108","Ilha do Meio",2018,4,14,"Sula dactylatra",95,"Nests with Eggs","M7"
+"109","Ilha do Meio",2018,4,14,"Sula dactylatra",52,"Adults","M8"
+"110","Ilha do Meio",2018,4,14,"Sula dactylatra",35,"Nests with Eggs","M8"
+"111","Ilha do Meio",2018,4,14,"Sula dactylatra",65,"Adults","M9"
+"112","Ilha do Meio",2018,4,14,"Sula dactylatra",55,"Nests with Eggs","M9"
+"113","Ilha Rata",2017,8,1,"Sula dactylatra",137,"Adults","R1"
+"114","Ilha Rata",2017,8,1,"Sula dactylatra",0,"Nests with Eggs","R1"
+"115","Ilha Rata",2017,10,19,"Sula dactylatra",59,"Adults","R1"
+"116","Ilha Rata",2017,10,19,"Sula dactylatra",0,"Nests with Eggs","R1"
+"117","Ilha Rata",2018,1,31,"Sula dactylatra",147,"Adults","R1"
+"118","Ilha Rata",2018,1,31,"Sula dactylatra",8,"Nests with Eggs","R1"
+"119","Ilha Rata",2018,4,17,"Sula dactylatra",251,"Adults","R1"
+"120","Ilha Rata",2018,4,17,"Sula dactylatra",172,"Nests with Eggs","R1"
