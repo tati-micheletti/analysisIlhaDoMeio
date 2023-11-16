@@ -1,12 +1,14 @@
 ############################### WILDLIFE MODELS ###############################
-modelTerrestrials <- function(DT, island, species, rerunModels = FALSE, reRunK = FALSE){
+modelWildlife <- function(DT, island, species, rerunModels = FALSE, 
+                              reRunK = FALSE){
   
   islandShort <-  if (island == "Ilha Rata") "Rata" else "Meio"
   spShort <-  if (species == "Elaenia ridleyana") "elaenia" else 
                 if (species == "Trachylepis atlantica") "mabuia" else 
-                  if (species == "Johngarthia lagostoma") "crab" else 
+                  if (species == "Johngarthia lagostoma") "crab" else
+                    if (species == "Sula dactylatra") "maskedBooby" else
                     stop(paste0("Species ", species, " is not in the dataset"))
-  immg <- if (species == "Elaenia ridleyana") TRUE else FALSE
+  immg <- if (spShort %in% c("elaenia", "maskedBooby")) TRUE else FALSE
   paramTable <- loadParametersTable() 
   spParameters <- spParams(islandShort = islandShort, spShort = spShort)
   
@@ -17,8 +19,8 @@ modelTerrestrials <- function(DT, island, species, rerunModels = FALSE, reRunK =
   
   # First we subset the data to the interested place and the species
   if (spShort == "crab"){
-    terrestrials <- DT[Species == species,]
-    datesForMoon <- sort(unique(terrestrials$Date))
+    wildife <- DT[Species == species,]
+    datesForMoon <- sort(unique(wildife$Date))
     # These were manually added: https://www.webexhibits.org/calendars/moon.html
     phasesOfMoon <- c("Waxing Gibbous Moon", "Full Moon", "Waning Crescent Moon",
                       "Waning Crescent Moon", "New Moon Crescent Moon", "New Moon Crescent Moon",
@@ -27,44 +29,48 @@ modelTerrestrials <- function(DT, island, species, rerunModels = FALSE, reRunK =
                       "Waxing Crescent Moon")
     moon <- data.table(Date = as.Date(datesForMoon),
                        Moon = phasesOfMoon)
-    terrestrialsMerged <- merge(terrestrials, moon, by = "Date")
-    terrestrials <- terrestrialsMerged[Island == island,]
+    wildifeMerged <- merge(wildife, moon, by = "Date")
+    wildife <- wildifeMerged[Island == island,]
   } else {
-    terrestrials <- DT[Island == island & Species == species,]
+    wildife <- DT[Island == island & Species == species,]
   }
-  area <- unique(terrestrials$Radius)
+  # If seabird species, use the whole island for observation as the whole island 
+  # is walked for survey. Area here in meters, except for seabirds, which is m2. 
+  area <- if (spShort %in% c("elaenia", "brownBooby", 
+                             "redFootedBooby", "maskedBooby")) 180000 else 
+                               unique(wildife$Radius)
   # Drop what we don't need, or don't want: 
   # Island, Year, Month, Day, Species, Radius, Original_Landscape, originDate
   toRemove <- c("Island", "Year", "Month", "Day", "Species", 
                 "Radius", "Original_Landscape", "originDate",
-                "pointID", "transectID") # For terrestrials in Rata, we need to use ponto_numero as site
+                "pointID", "transectID") # For wildife in Rata, we need to use ponto_numero as site
   # because there were mistakes in the table that were corrected
   # by PM later.
   if (islandShort == "Rata"){
     toRemove <- c(toRemove, "site")
-    terrestrials <- terrestrials[, (toRemove) := NULL]
-    names(terrestrials)[names(terrestrials)=="ponto_numero"] <- "site"
-    terrestrials[, site := as.character(site)]
+    wildife <- wildife[, (toRemove) := NULL]
+    names(wildife)[names(wildife)=="ponto_numero"] <- "site"
+    wildife[, site := as.character(site)]
   } else {
     toRemove <- c(toRemove, "ponto_numero")
-    terrestrials <- terrestrials[, (toRemove) := NULL]
+    wildife <- wildife[, (toRemove) := NULL]
   }
   
   # Now we make the needed objects:
   # y --> Matrix with observations where rows represent each site (unmarked calls this 'M'), and columns the 
   # (increasing) sampling occasion (i.e., the time series of counts, representing 
   # each visit), which unmarked calls 'T'. The value is the Counts.
-  finalCounts <- dcast(terrestrials, site ~ Date, value.var = "Counts")
+  finalCounts <- dcast(wildife, site ~ Date, value.var = "Counts")
   y <- as.matrix(finalCounts[,-1]) # Convert to matrix
   
   # obsCov --> Observation covariates are the ones that vary per sampling occasion.
   # This object is a named list of each covariate, which are data frames of rows 
   # representing each site and the columns each sampling occasion. 
   # Examples are: observerID, JulianDate, TSE
-  moonPhase <- if (spShort == "crab") as.matrix(dcast(terrestrials, site ~ Date, value.var = "Moon")[,-1]) else NA
-  observerID <- as.matrix(dcast(terrestrials, site ~ Date, value.var = "Observer")[,-1])
-  JulianDate <- as.matrix(dcast(terrestrials, site ~ Date, value.var = "JulianDate")[,-1])
-  TSE <- as.matrix(dcast(terrestrials, site ~ Date, value.var = "timeSinceStartEradication")[,-1])
+  moonPhase <- if (spShort == "crab") as.matrix(dcast(wildife, site ~ Date, value.var = "Moon")[,-1]) else NA
+  observerID <- as.matrix(dcast(wildife, site ~ Date, value.var = "Observer")[,-1])
+  JulianDate <- as.matrix(dcast(wildife, site ~ Date, value.var = "JulianDate")[,-1])
+  TSE <- as.matrix(dcast(wildife, site ~ Date, value.var = "timeSinceStartEradication")[,-1])
   
   # Fill in the matrix of JulianDate and TSE: this affects the models later on
   JulianDate <- replaceNAwithColMean(JulianDate)
@@ -90,7 +96,7 @@ modelTerrestrials <- function(DT, island, species, rerunModels = FALSE, reRunK =
   # other. This object is matrix where rows representing each site and the columns 
   # each covariate. 
   # Examples are: Cover (landscape type)
-  coverRaw <- dcast(terrestrials, site ~ Date, value.var = "Landscape")
+  coverRaw <- dcast(wildife, site ~ Date, value.var = "Landscape")
   # For each row I need the unique value of cover without NA:
   cover <- data.frame(cover = unlist(lapply(1:NROW(coverRaw), 
                                             function(r){
@@ -140,15 +146,15 @@ modelTerrestrials <- function(DT, island, species, rerunModels = FALSE, reRunK =
   }
   
   # Create the unmarkedFrame
-  terrestrialsDF <- unmarkedFramePCO(y = y,
+  wildifeDF <- unmarkedFramePCO(y = y,
                                siteCovs = cover,
                                obsCovs = obsCovs,
                                numPrimary = numPrimary,
                                yearlySiteCovs = yearlySiteCovs
   )
   # Take a look
-  terrestrialsDF
-  summary(terrestrialsDF)
+  wildifeDF
+  summary(wildifeDF)
   
   ######
   
@@ -159,9 +165,9 @@ modelTerrestrials <- function(DT, island, species, rerunModels = FALSE, reRunK =
   # We run then a negative binomial (NB) and a zero inflated poisson (ZIP)
   # We don't run Poisson because the data us zero inflated
   
-  terrestrials_nullModels_file <- paste0("./outputs/", spShort,"_", islandShort,"_nullModels.qs") 
+  wildife_nullModels_file <- paste0("./outputs/", spShort,"_", islandShort,"_nullModels.qs") 
   
-  if (any(rerunModels, !file.exists(terrestrials_nullModels_file))){
+  if (any(rerunModels, !file.exists(wildife_nullModels_file))){
     if (rerunModels)
       message(paste0("The argument rerunModels = TRUE.", 
                      "Running the null models for ", spShort," on ", island,
@@ -177,7 +183,7 @@ modelTerrestrials <- function(DT, island, species, rerunModels = FALSE, reRunK =
                        omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
                        pformula = ~1,
                        iotaformula = ~1,
-                       data = terrestrialsDF,
+                       data = wildifeDF,
                        mixture = nullModType, # Negative binomial
                        dynamics = "trend", # We want the population trend through time
                        immigration = immg,
@@ -185,10 +191,11 @@ modelTerrestrials <- function(DT, island, species, rerunModels = FALSE, reRunK =
       return(nM)
     })
     names(nullModels) <- nullModsNames
-    qs::qsave(x = nullModels, file = terrestrials_nullModels_file)
+    qs::qsave(x = nullModels, file = wildife_nullModels_file)
   } else {
-    message(paste0("Null models for terrestrials on ", island," are available. Loading results..."))
-    nullModels <- qs::qread(file = terrestrials_nullModels_file)
+    message(paste0("Null models for ", spShort," on ", island,
+                   " are available. Loading results..."))
+    nullModels <- qs::qread(file = wildife_nullModels_file)
   }
   # Now we check which formulation to use. Runs all three formulations: ZIP, P, and NB
   # ZIP = Zero Inflated; NB = Negative Binomial; P = Poisson
@@ -213,8 +220,8 @@ modelTerrestrials <- function(DT, island, species, rerunModels = FALSE, reRunK =
   ######
   
   ###### MODELS #####
-  terrestrials_models <- paste0("./outputs/",spShort,"_",islandShort,"_models.qs")
-  terrestrials_models_t <- paste0("./outputs/",spShort,"_",islandShort,"_models_time.qs")
+  wildife_models <- paste0("./outputs/",spShort,"_",islandShort,"_models.qs")
+  wildife_models_t <- paste0("./outputs/",spShort,"_",islandShort,"_models_time.qs")
   
   mods <- data.table(expand.grid(lambda = spParameters$lambda, 
                                  gamma = spParameters$gamma, 
@@ -222,11 +229,12 @@ modelTerrestrials <- function(DT, island, species, rerunModels = FALSE, reRunK =
                                  iota = spParameters$iota))
   mods[, models := paste0(lambda, gamma, p, iota)]
   
-  if (any(rerunModels, !file.exists(terrestrials_models))){
+  if (any(rerunModels, !file.exists(wildife_models))){
     if (rerunModels)
       message(paste0("The argument rerunModels = TRUE.", 
                      "Running the models will take some time...")) else   
-                       message(paste0("Models for terrestrials on ", island," haven't yet been run yet.",
+                       message(paste0("Models for ", spShort," on ", island,
+                                      " haven't yet been run yet.",
                                       " Running the models will take some time..."))
     t0 <- Sys.time()
     en <- environment()
@@ -235,13 +243,14 @@ modelTerrestrials <- function(DT, island, species, rerunModels = FALSE, reRunK =
       tic(paste0("Model ", modName, " finished: "))
       indMod <- paste0("./outputs/individualModels/", spShort, "_", islandShort, "_", modName,".qs")
       if (!file.exists(indMod)){
-        message(paste0("The model ", modName, " doesn't exist. Running."))
+        message(paste0("The model ", modName, " for ", spShort,
+                       " for ", island, " doesn't exist. Running."))
         currMod <- pcountOpen(lambdaformula = paramTable[variable == as.character(mods[Row, lambda]), value][[1]],  # Initial abundance
                               gammaformula = paramTable[variable == as.character(mods[Row, gamma]), value][[1]],  # Population growth rate
                               omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
                               pformula = paramTable[variable == as.character(mods[Row, p]), value][[1]], # Probability of observation
                               iotaformula = paramTable[variable == as.character(mods[Row, iota]), value][[1]], # Immigration
-                              data = terrestrialsDF,
+                              data = wildifeDF,
                               mixture = modType,
                               dynamics = "trend", # We want the population trend through time
                               immigration = immg,
@@ -257,35 +266,35 @@ modelTerrestrials <- function(DT, island, species, rerunModels = FALSE, reRunK =
     })
     names(allMods) <- mods[["models"]]
     
-    terrestrials_Models <- fitList(fits = allMods)
+    wildife_Models <- fitList(fits = allMods)
     
-    terrestrials_models_time <- numeric(length(terrestrials_Models@fits))
-    for (m in 0:(length(terrestrials_models_time)-1)){
+    wildife_models_time <- numeric(length(wildife_Models@fits))
+    for (m in 0:(length(wildife_models_time)-1)){
       otm <- get(paste0("t", m+1))-get(paste0("t", m))
       tm <- as.numeric(otm)
-      terrestrials_models_time[m+1] <- if (units(otm)=="secs")
+      wildife_models_time[m+1] <- if (units(otm)=="secs")
         tm/60 else # Seconds
           if (units(otm)=="mins")
             tm else # Minutes
               tm*60 # Hours
     }
     
-    qs::qsave(x = terrestrials_Models, file = terrestrials_models)
-    qs::qsave(x = terrestrials_models_time, file = terrestrials_models_t)
+    qs::qsave(x = wildife_Models, file = wildife_models)
+    qs::qsave(x = wildife_models_time, file = wildife_models_t)
     
   } else {
     message(paste0("Models for ", spShort, " on ", island,
                    " are available. Loading results..."))
-    terrestrials_Models <- qs::qread(file = terrestrials_models)
-    terrestrials_models_time <- qs::qread(file = terrestrials_models_t)
+    wildife_Models <- qs::qread(file = wildife_models)
+    wildife_models_time <- qs::qread(file = wildife_models_t)
   }
   
-  message(paste0("It takes ", round(sum(terrestrials_models_time), 0), 
+  message(paste0("It takes ", round(sum(wildife_models_time), 0), 
                  " minutes to run all models."))
   
-  modelSelected <- modSel(terrestrials_Models)
-  terrestrials_best_model_name <- modelSelected@Full[1,"model"]
-  terrestrials_best_model <- terrestrials_Models@fits[[terrestrials_best_model_name]]
+  modelSelected <- modSel(wildife_Models)
+  wildife_best_model_name <- modelSelected@Full[1,"model"]
+  wildife_best_model <- wildife_Models@fits[[wildife_best_model_name]]
   
   ######
   
@@ -294,37 +303,38 @@ modelTerrestrials <- function(DT, island, species, rerunModels = FALSE, reRunK =
   # We need to check if our K is enough. This is done my running the best model 
   # with various values of K until AIC remains unchanged
   
-  terrestrials_best <- paste0("./outputs/",spShort,"_",islandShort,"_bestModel.qs")
-  terrestrials_models_K_t <- paste0("./outputs/",spShort,"_",islandShort,"_models_K_time.qs")
+  wildife_best <- paste0("./outputs/",spShort,"_",islandShort,"_bestModel.qs")
+  wildife_models_K_t <- paste0("./outputs/",spShort,"_",islandShort,"_models_K_time.qs")
   kvals <- c(50, 100, 250, 500, 600, 800) # Min K is obs+1. Crabs have up to 37.
   if (any(reRunK,
           rerunModels, 
-          !file.exists(terrestrials_best))){
+          !file.exists(wildife_best))){
     if (any(reRunK, rerunModels))
       message(paste0("The argument rerunModels = TRUE or rerunK = TRUE. ", 
                      "Running the models for for assessing K will take some time...")) else   
-                       message(paste0("Models for for assessing K for terrestrials on ",
-                                      island,
-                                      " haven't yet been run yet.",
+                       message(paste0("Models for for assessing K for ", spShort, " on ",
+                                      island, " haven't yet been run yet.",
                                       " Running the models will take some time..."))
 
-    bestLambda <- as.character(mods[models == terrestrials_best_model_name, lambda])
-    bestGamma <- as.character(mods[models == terrestrials_best_model_name, gamma])
-    bestP <- as.character(mods[models == terrestrials_best_model_name, p])
-    bestIota <- if (spShort == "elaenia") as.character(mods[models == terrestrials_best_model_name, iota]) else "iota(.)"
+    bestLambda <- as.character(mods[models == wildife_best_model_name, lambda])
+    bestGamma <- as.character(mods[models == wildife_best_model_name, gamma])
+    bestP <- as.character(mods[models == wildife_best_model_name, p])
+    bestIota <- if (spShort == "elaenia") as.character(mods[models == wildife_best_model_name, iota]) else "iota(.)"
       t0 <- Sys.time()
       en <- environment()
-      terrestrials_bestModel <- lapply(1:length(kvals), function(i){
+      wildife_bestModel <- lapply(1:length(kvals), function(i){
         tic(paste0("Model with K ", kvals[i], " finished: "))
-        indMod <- paste0("./outputs/individualModels/", spShort, "_", islandShort, "_K", kvals[i],".qs")
+        indMod <- paste0("./outputs/individualModels/", spShort, "_", 
+                         islandShort, "_K", kvals[i],".qs")
         if (!file.exists(indMod)){
-          message(paste0("The model with K ", kvals[i], " doesn't exist. Running."))
+          message(paste0("The model with K ", kvals[i], " for ", spShort,
+                         " for ", island," doesn't exist. Running."))
         modK <- pcountOpen(lambdaformula = paramTable[variable == bestLambda, value][[1]],  # Initial abundance
                            gammaformula = paramTable[variable == bestGamma, value][[1]],  # Formula for population growth rate
                            omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
                            pformula = paramTable[variable == bestP, value][[1]],
                            iotaformula = paramTable[variable == bestIota, value][[1]],
-                           data = terrestrialsDF,
+                           data = wildifeDF,
                            mixture = modType,
                            dynamics = "trend", # We want the population trend through time
                            immigration = immg,
@@ -332,63 +342,69 @@ modelTerrestrials <- function(DT, island, species, rerunModels = FALSE, reRunK =
         toc()
         qs::qsave(x = modK, file = indMod)
         } else {
-          message(paste0("The model with K ", kvals[i], " already exists. Returning."))
+          message(paste0("The model with K ", kvals[i], " for ", spShort,
+                         " for ", island," already exists. Returning."))
           modK <- qs::qread(indMod)
         }
         assign(x = paste0("t", i), value = Sys.time(), envir = en)
         return(modK)
       })
-    names(terrestrials_bestModel) <- paste0("K_", kvals)
-    qs::qsave(x = terrestrials_bestModel, file = terrestrials_best)
-    terrestrials_models_K_time <- length(terrestrials_bestModel)
-    for (m in 0:(terrestrials_models_K_time-1)){
+    names(wildife_bestModel) <- paste0("K_", kvals)
+    qs::qsave(x = wildife_bestModel, file = wildife_best)
+    wildife_models_K_time <- length(wildife_bestModel)
+    for (m in 0:(wildife_models_K_time-1)){
       otm <- get(paste0("t", m+1))-get(paste0("t", m))
       tm <- as.numeric(otm)
-      terrestrials_models_K_time[m+1] <- if (units(otm)=="secs")
+      wildife_models_K_time[m+1] <- if (units(otm)=="secs")
         tm/60 else # Seconds
           if (units(otm)=="mins")
             tm else # Minutes
               tm*60 # Hours
     }
-    qs::qsave(x = terrestrials_models_K_time, file = terrestrials_models_K_t)
+    qs::qsave(x = wildife_models_K_time, file = wildife_models_K_t)
   } else {
-    message(paste0("Models for assessing K for terrestrials on ", island,
+    message(paste0("Models for assessing K for ", spShort," on ", island,
                    " are available. Loading results..."))
-    terrestrials_bestModel <- qs::qread(file = terrestrials_best)
-    terrestrials_models_K_time <- qs::qread(file = terrestrials_models_K_t)
+    wildife_bestModel <- qs::qread(file = wildife_best)
+    wildife_models_K_time <- qs::qread(file = wildife_models_K_t)
   }
-  terrestrials_AICs <- sapply(terrestrials_bestModel, function(m) m@AIC)
+  wildife_AICs <- sapply(wildife_bestModel, function(m) m@AIC)
   
   # Plot AIC to see if the K is ok
-  p <- plot(x = kvals, y = terrestrials_AICs, xlab = "K values", ylab = "AIC")
+  p <- plot(x = kvals, y = wildife_AICs, xlab = "K values", ylab = "AIC", 
+            title = paste0(spShort, " models on ", island))
 
   # We then override the best model with the model with highest K --> most stable parameters
-  terrestrials_best_model <- terrestrials_bestModel[[length(terrestrials_bestModel)]]
+  wildife_best_model <- wildife_bestModel[[length(wildife_bestModel)]]
   ######
   
   ###### PARAMETER ESTIMATION ######
   # Back-transformation of parameters using predict()
-  initialPopulation <- predict(obj = terrestrials_best_model, type = "lambda")
-  populationGrowthRate <- predict(terrestrials_best_model, type = "gamma")
-  detection <- predict(terrestrials_best_model, type = "det")
-  immigration <- if (spShort == "elaenia") predict(terrestrials_best_model, type = "iota") else NA
+  initialPopulation <- predict(obj = wildife_best_model, type = "lambda")
+  populationGrowthRate <- predict(wildife_best_model, type = "gamma")
+  detection <- predict(wildife_best_model, type = "det")
+  immigration <- if (spShort == "elaenia") predict(wildife_best_model, type = "iota") else NA
   
-  pop <- unique(data.table(initialPop = predict(terrestrials_best_model, type = "lambda")[,1], 
-                           cover = terrestrials_best_model@data@siteCovs[, "cover"]))
+  pop <- unique(data.table(initialPop = predict(wildife_best_model, type = "lambda")[,1], 
+                           cover = wildife_best_model@data@siteCovs[, "cover"]))
   
-  # The observation radius for terrestrials is 3m, so the area is 28.27m2 or 0,002827ha
-  pop[, areaM := (1*pi*area^2)] # height*pi*observation radius^2 = observed area --> 
-  # Observations for mabuia were done in 3D, trees, rocks, bushes, etc.
+  # The observation radius for wildife is 3m, so the area is 28.27m2 or 0,002827ha
+  if (spShort %in% c("elaenia", "maskedBooby")){
+    pop[, areaM := area] # It is already correct for boobies (i.e., whole island)
+  } else {
+    pop[, areaM := (1*pi*area^2)] # height*pi*observation radius^2 = observed area --> 
+    # Observations for mabuia were done in 3D, trees, rocks, bushes, etc.
+  }
   pop[, densityM := initialPop/areaM]
   ######
   
-  return(list(IndividualModelRunTime = terrestrials_models_time,
-              totalModelRunTime = sum(terrestrials_models_time),
+  return(list(IndividualModelRunTime = wildife_models_time,
+              totalModelRunTime = sum(wildife_models_time),
               nullModels = nullModels,
-              allModels = terrestrials_Models,
-              bestModelName = terrestrials_best_model_name,
-              bestModel = terrestrials_best_model,
-              allKmodels = terrestrials_bestModel,
+              allModels = wildife_Models,
+              bestModelName = wildife_best_model_name,
+              bestModel = wildife_best_model,
+              allKmodels = wildife_bestModel,
               Kplot = p,
               initialPopulation = initialPopulation,
               detectionProbability = detection,

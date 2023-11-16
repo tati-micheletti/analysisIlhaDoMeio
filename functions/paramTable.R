@@ -12,6 +12,7 @@ loadParametersTable <- function(){
 
 spParams <- function(islandShort, spShort){
   if (islandShort == "Rata"){
+    ########################## RATA
     if (spShort == "elaenia"){
       #### ELAENIA RATA ####
       lambda <- "lam(.)"
@@ -33,7 +34,15 @@ spParams <- function(islandShort, spShort){
       p <- c("p(.)", "p(JulianDate)", "p(moonPhase)","p(JulianDate+moonPhase)")
       iota <- "iota(.)"
     }
+    if (spShort == "maskedBooby"){
+      #### BOOBIES RATA ####
+      lambda <- "lam(.)"
+      gamma <- c("gamma(.)", "gamma(JulianDate)")
+      p <- "p(.)"
+      iota <- c("iota(.)", "iota(JulianDate)")
+    }
   } else {
+    ########################## MEIO
     if (spShort == "elaenia"){
       #### ELAENIA MEIO ####
       lambda <- "lam(.)"
@@ -54,6 +63,13 @@ spParams <- function(islandShort, spShort){
       gamma <- c("gamma(.)", "gamma(JulianDate)", "gamma(TSE)", "gamma(JulianDate+TSE)")
       p <- c("p(.)", "p(JulianDate)", "p(moonPhase)","p(JulianDate+moonPhase)")
       iota <- "iota(.)"
+    }
+    if (spShort == "maskedBooby"){
+      #### BOOBIES MEIO ####
+      lambda <- "lam(.)"
+      gamma <- c("gamma(.)", "gamma(JulianDate)", "gamma(TSE)", "gamma(JulianDate+TSE)")
+      p <- "p(.)"
+      iota <- c("iota(.)", "iota(JulianDate)", "iota(TSE)", "iota(JulianDate+TSE)")
     }
   }
   return(list(lambda = lambda,
