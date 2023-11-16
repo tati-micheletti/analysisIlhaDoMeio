@@ -340,9 +340,8 @@ modelTerrestrials <- function(DT, island, species, rerunModels = FALSE, reRunK =
       })
     names(terrestrials_bestModel) <- paste0("K_", kvals)
     qs::qsave(x = terrestrials_bestModel, file = terrestrials_best)
-    
-    terrestrials_models_K_time <- numeric(length(terrestrials_bestModel@fits))
-    for (m in 0:(length(terrestrials_models_K_time)-1)){
+    terrestrials_models_K_time <- length(terrestrials_bestModel)
+    for (m in 0:(terrestrials_models_K_time-1)){
       otm <- get(paste0("t", m+1))-get(paste0("t", m))
       tm <- as.numeric(otm)
       terrestrials_models_K_time[m+1] <- if (units(otm)=="secs")
