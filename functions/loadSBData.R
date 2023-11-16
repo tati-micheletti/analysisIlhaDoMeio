@@ -1,7 +1,8 @@
-# Loading the land species data
+# Loading the seabird species data
 
-loadESData <- function(dataLocation){
+loadSBData <- function(dataLocation){
   DT <- fread(dataLocation)
+  browser()
   DT[, "Date" :=  as.Date(with(DT,paste(Year,Month,Day,sep="-")),"%Y-%m-%d")]
   DT[, "originDate" :=  as.Date(paste(Year,1,1,sep="-"),"%Y-%m-%d")]
   julDate <- rbindlist(lapply(X = 1:NROW(DT), function(rid){
@@ -14,8 +15,5 @@ loadESData <- function(dataLocation){
   }))
   DT[, "JulianDate" :=  julDate]
   DT[, "timeSinceStartEradication" :=  julian.Date(x = Date, origin = as.Date(min(unique(DT$Date))))]
-  DT[, pointID := 1:.N, by = c("Original_Landscape", "Date", "Island", "Species")]
-  DT[, transectID := LETTERS[as.numeric(as.factor(Original_Landscape))]]
-  DT[, site := paste0(transectID, pointID)]
   return(DT)
 }

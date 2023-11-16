@@ -34,7 +34,7 @@ for (fl in allFls){
 }
 ```
 
-## Endangered species
+## Endangered land species
 
 Then we load the data and format the information we need for the models. The `IPA.csv` file contains 
 all data for the endangered species. Sea birds' data are hosted in another file, loaded below.
@@ -56,22 +56,83 @@ by rats is high, we consider every sampling occasion as primary (i.e., open popu
 covariate for the time since the start of the eradication.
 
 ```{r mabuiaMeio}
-mabuiaMeio <- modelMabuia(DT = Data, island = "Ilha do Meio")
+mabuiaMeio <- modelTerrestrials(DT = Data, island = "Ilha do Meio", species = "Trachylepis atlantica")
 ```
 
 Now we will run the models for Mabuia for Ilha Rata (our control). 
 
 ```{r mabuiaRata}
-mabuiaRata <- modelMabuia(DT = Data, island = "Ilha Rata")
+mabuiaRata <- modelTerrestrials(DT = Data, island = "Ilha Rata", species = "Trachylepis atlantica")
 ```
+
+It is important to notice that a couple of the alternative models did not converge 
+throwing the error `Hessian is singular.`. This can happen for several reasons 
+but in the present case is likely due. Most models that failed had to the parameter 
+TSE when to gamma as a covariate, while one model failed with Julian Date. 
+Nonetheless, our best model did not have TSE as covariate.
 
 ## Elenia  
 
-Next, we will continue our analysis with the Cucuruta (Noronha Elaenia; **). 
+Next, we will continue our analysis with the Cucuruta (Noronha Elaenia; *Elaenia ridleyana*).  
+The observation from Elaenias rendered data that did not present zero inflation. Therefore, 
+we used Poisson models, since the overdispersion was also not detected. Differently 
+from the Mabuia, the Elaenia does present movement (iota) between the islands, which 
+was modeled in the analysis. As we believe the effects of rats on the Elaenia is 
+likely restricted to small chicks and eggs, we used the robust design, considering 
+a closed population within primary sampling occasions (two days in a row), and open between 
+primary sampling occasions (several weeks apart). First we ran the models for the Meio 
+island:  
 
-```{r elaeniaRata}
-elaeniaMeio <- modelElaenia(DT = Data, island = "Ilha do Meio")
-elaeniaRata <- modelElaenia(DT = Data, island = "Ilha Rata")
+```{r elaeniaMeio}
+elaeniaMeio <- modelTerrestrials(DT = Data, island = "Ilha do Meio", species = "Elaenia ridleyana")
 ```
 
-First we will run the models for the Ilha do Meio. For the mabuia, Negative 
+And then for the Rata island:  
+
+```{r elaeniaRata}
+elaeniaRata <- modelTerrestrials(DT = Data, island = "Ilha Rata", species = "Elaenia ridleyana")
+```
+
+## Land Crab  
+
+The analysis of land crabs (*Johngarthia lagostoma*) was then performed. This 
+species is known to present increase movement during breeding season. Lesser 
+wave action associated with neap high tides (in first and last quarters of moon 
+cycle) seem to be preferred. In the same way, peak periods of rain (i.e., March 
+or April) also seem to be important factors for these movements. Therefore, we 
+added the moon phase to this dataset to use it as a covariate in the model. The 
+rainy season should be covered by the covariate JulianDate. Crab data is also 
+zero inflated, so we tested both ZIP and NB models. Similarly to Mabuia, although 
+the NB model presented a smaller AIC, the dispersion parameter was not significant, 
+while the zero inflation was in the ZIP model. Therefore, we opted for a ZIP model.
+
+```{r crabMeio}
+crabMeio <- modelCrab(DT = Data, island = "Ilha do Meio", species = "Johngarthia lagostoma")
+```
+
+After modelling crabs for the Ilha do Meio, we perform the same analysis for Ilha Rata:
+
+```{r crabRata}
+crabRata <- modelCrab(DT = Data, island = "Ilha Rata", species = "Johngarthia lagostoma")
+```
+
+## Endangered seabird species
+
+To perform the analysis for seabirds (*Sula ssp.*), we need to load the data from another file. 
+The `CENSUS.csv` file contains all data for sea birds'. For all sea bird species, 
+only one survey was done per primary occasion, following current monitoring 
+protocols in place. For brown booby (*S. leucogaster*) 
+and red-footed booby (*S. sula*) observations were performed only on Ilha do 
+Meio (sites M1 and M2, respectively) (as colonies of these species are 
+in an inaccessible part of Ilha Rata). For masked booby (*S. dactylatra*), 
+however, surveys were performed in all breeding sites across the Ilha do Meio 
+(n = 7; sites M3 to M9), and on the only breeding site on Ilha Rata (site R1).
+
+```{r loadAndCheckData}
+Data <- loadSBData(dataLocation = "data/CENSUS.csv")
+```
+
+##  Brown Booby  (and Sula sula)
+
+To perform the ana The analysis of the Atoba-Marrom (brown bobby; *Sula 
+leucogaster*) was then performed. This ...
