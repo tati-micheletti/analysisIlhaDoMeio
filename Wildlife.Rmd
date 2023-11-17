@@ -150,10 +150,12 @@ maskedBoobyRata <- modelTerrestrials(DT = Data, island = "Ilha Rata",
                                      species = "Sula dactylatra")
 ```
 
-Now that the models were constructed, we need to calculate the change in population 
+### NEXT STEPS
+
+1) Now that the models were constructed, we need to calculate the change in population 
 density through time for Ilha do Meio, and compare it to the control area (Ilha 
 Rata).
 
-At last, we build a plot to show the difference in density through time in function 
-of time since eradication (TSE).
+2) At last, we build a plot to show the difference in density through time in function 
+of time since eradication (TSE) using the control to control for seasonality.
 

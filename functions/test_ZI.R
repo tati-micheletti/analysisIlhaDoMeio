@@ -11,7 +11,7 @@ test_ZI <- function(dts){
   expectedZeros <- n*p0_tilde
   realZeros <- table(pois_data)["0"]
   message(paste0("Real zeros over expected zeros by a factor of ", 
-                 realZeros/expectedZeros)) # More realZeros than expected zeros, likely ZI))
+                 round(realZeros/expectedZeros, digits = 2))) # More realZeros than expected zeros, likely ZI))
   #now lets perform the JVDB score test 
   numerator <- (n0 -n*p0_tilde)^2
   denominator <- n*p0_tilde*(1-p0_tilde) - n*lambda_est*(p0_tilde^2)
