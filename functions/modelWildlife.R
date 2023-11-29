@@ -1,6 +1,6 @@
 ############################### WILDLIFE MODELS ###############################
 modelWildlife <- function(DT, island, species, rerunModels = FALSE, 
-                              reRunK = FALSE){
+                              reRunK = FALSE, plotting = FALSE){
   
   islandShort <-  if (island == "Ilha Rata") "Rata" else "Meio"
   spShort <-  if (species == "Elaenia ridleyana") "elaenia" else 
@@ -178,18 +178,27 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
   # ZIP is significant, Dispersion is significant: best AIC
   pZI2 <- summary(nullModels[["ZIP"]])[["psi"]][["P(>|z|)"]] < 0.05
   pNB <- summary(nullModels[["NB"]])[["alpha"]][["P(>|z|)"]] < 0.05
-  
+  if (is.na(pZI2)) pZI2 <- FALSE
+  if (is.na(pNB)) pNB <- FALSE
   bestAIC <- if (nullModels[["ZIP"]]@AIC < nullModels[["NB"]]@AIC) "ZIP" else "NB"
-  
-  modType <- if (all(any(pZI1, pZI2), !pNB)) "ZIP" else # ZIP = TRUE, NB = FALSE
+
+  modType <- if (all(!any(pZI1, pZI2), !pNB)) "P" else # ZIP = FALSE, NB = FALSE
     if (all(!any(pZI1, pZI2), pNB)) "NB" else # ZIP = FALSE, NB = TRUE
-      if (all(!any(pZI1, pZI2), !pNB)) "P" else # ZIP = FALSE, NB = FALSE
-        if (all(any(pZI1, pZI2), !pNB)) bestAIC else # ZIP = TRUE, NB = TRUE
+      if (all(any(pZI1, pZI2), !pNB)) "ZIP" else # ZIP = TRUE, NB = FALSE
+        if (all(any(pZI1, pZI2), pNB)) bestAIC else # ZIP = TRUE, NB = TRUE
           stop(paste0("NB = ", pNB, "; ZIP1 = ", pZI1, 
                       "; ZIP2 = ", pZI2, 
                       ". Something seems wrong. Debug."))
-  message(paste0("Type of model for ", spShort, " for ", island, 
-                 " was determined as ", modType))
+
+  nullModChosen <- nullModels[[modType]]
+  hasNoEstimates <- coef(nullModChosen)["gamTrend(Int)"] == 0
+  if (hasNoEstimates){
+    message(paste0("Model type ", modType, " did not converge. Using ", 
+                   bestAIC, " instead"))
+    modType <- bestAIC
+  }
+    message(paste0("Type of model for ", spShort, " for ", island, 
+                   " was determined as ", modType))
   ######
   
   ###### MODELS #####
@@ -365,8 +374,10 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
   wildife_AICs <- sapply(wildife_bestModel, function(m) m@AIC)
   
   # Plot AIC to see if the K is ok
-  p <- plot(x = valuesK, y = wildife_AICs, xlab = "K values", ylab = "AIC", 
-            title = paste0(spShort, " models on ", island))
+  if (plotting){
+    p <- plot(x = valuesK, y = wildife_AICs, xlab = "K values", ylab = "AIC", 
+              title = paste0(spShort, " models on ", island))
+  } else p <- NA
 
   # We then override the best model with the model with highest K --> most stable parameters
   wildife_best_model <- wildife_bestModel[[length(wildife_bestModel)]]
@@ -392,8 +403,8 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
   pop[, densityM := initialPop/areaM]
   ######
   
-  return(list(IndividualModelRunTime = wildife_models_time,
-              totalModelRunTime = sum(wildife_models_time),
+  return(list(species = species,
+              island = island,
               nullModels = nullModels,
               allModels = wildife_Models,
               bestModelName = wildife_best_model_name,
@@ -404,6 +415,12 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
               detectionProbability = detection,
               populationGrowthRate = populationGrowthRate,
               immigration = immigration,
-              initialPopulationDensity = pop))
+              initialPopulationDensity = pop,
+              modelType = modType,
+              numberOfSites = NROW(y),
+              cover = wildife_best_model@data@siteCovs[, "cover"],
+              samplingOccasions = numPrimary,
+              totalModelRuntime = sum(wildife_models_K_time[2:length(wildife_models_K_time)], 
+                                          wildife_models_time, na.rm = TRUE)))
 }
 #################################
