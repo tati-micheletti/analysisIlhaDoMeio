@@ -1,7 +1,0 @@
-"file" "checksum" "filesize" "algorithm"
-"PARNAMAR_Clipped.dbf" "215064e03616fd69" "87" "xxhash64"
-"PARNAMAR_Clipped.prj" "6475366b7b898264" "421" "xxhash64"
-"PARNAMAR_Clipped.qpj" "757c47c3e3d0626a" "415" "xxhash64"
-"PARNAMAR_Clipped.shp" "f0e2334e0a892f19" "31228" "xxhash64"
-"PARNAMAR_Clipped.shx" "1e5c72d136326308" "124" "xxhash64"
-"PARNAMAR_Clipped.zip" "c9d3363c209acd60" "24482" "xxhash64"
