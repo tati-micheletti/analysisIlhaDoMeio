@@ -32,7 +32,6 @@ vignettes/*.pdf
 *_cache/
 /cache/
 /outputs/*
-!/outputs/individualModels
 
 # Temporary files created by R markdown
 *.utf8.md
