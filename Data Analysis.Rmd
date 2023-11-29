@@ -1,5 +1,5 @@
 ---
-title: "Wildlife Ilha do Meio and Rata"
+title: "Swiftly squeaky clean: real-time adaptive management eradicates rat overpopulation and brings immediate benefits to tropical island biodiversity -- Data Analysis"
 author: "Tati Micheletti"
 date: "10/19/2023"
 output: html_document
@@ -9,7 +9,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Load Libraries and source functions
+This document describes the data analysis done for the paper *Swiftly squeaky clean: real-time adaptive management eradicates rat overpopulation and brings immediate benefits to tropical island biodiversity*.  
+
+## Load Libraries, source functions and set data directory
 
 The first step is to load the libraries we need and source the functions that will prepare the data 
 and run the models for each one of the species analyzed.
@@ -22,7 +24,9 @@ library("Require")
 Require("googledrive")
 Require("reproducible")
 Require("data.table")
+Require("terra")
 Require("unmarked")
+Require("secr")
 Require("tictoc")
 Require("qs")
 # If any packages were installed here, restart your session and re-run the code!
@@ -32,9 +36,10 @@ for (fl in allFls){
   message(paste0("Sourcing the function ", basename(fl))) 
   source(file = fl) 
 }
+wd <- file.path(getwd(), "data")
 ```
 
-## Species modeling
+# Wildlife species modeling
 
 After loading libraries and sourcing needed functions, we load the data and 
 format the information we need for the models. The 
@@ -49,7 +54,7 @@ could be used for all species, as it also allows for different distributions
 (i.e., Poisson, Negative Binomial and Zero Inflated). 
 
 ```{r loadAndCheckData}
-Data <- loadESData(dataLocation = "data/dataCOUNTS.csv")
+Data <- loadData(dataLocation = file.path(wd, "dataCOUNTS.csv"))
 ```
 
 ## Mabuia  
@@ -152,10 +157,145 @@ maskedBoobyRata <- modelTerrestrials(DT = Data, island = "Ilha Rata",
 
 ### NEXT STEPS
 
-1) Now that the models were constructed, we need to calculate the change in population 
+Now that the models were constructed, we need to calculate the change in population 
 density through time for Ilha do Meio, and compare it to the control area (Ilha 
 Rata).
 
-2) At last, we build a plot to show the difference in density through time in function 
-of time since eradication (TSE) using the control to control for seasonality.
+```{r changeInPopulationDensity}
+changeInPopulation <- calculatePopulationChange(species = c("Trachylepis atlantica",
+                                                            "Elaenia ridleyana"#,
+                                                            # "Johngarthia lagostoma",
+                                                            # "Sula dactylatra"
+                                                            ))
+```
 
+# Rat population modeling
+
+We also modeled rat population during the eradication efforts. For that, we used spatially 
+explicit capture-recapture techniques and the R package `secr` for analysis. Each 
+trapping sampling session data (i.e., campaign data of consecutive days) was 
+used as a stand-alone, independent dataset. This was done due to the adjustments 
+needed on number and disposition of traps for each new monitoring campaign, as 
+described in the manuscript. As rats were only captured in the first two campaigns, 
+despite increase trapping effort on the third campaign, only these two were modeled.  
+
+Before we model rat abundance, we prepare a mask of the island so the analysis 
+occurs only on the island area. This is recommended for island environments due 
+to potential edge effects.
+
+```{r mask, echo = TRUE, include = FALSE}
+PARNA <- terra::vect(file.path(wd, "Geomorfology.shp")) 
+meio <- subset(PARNA, PARNA$AREA_HA == 17.034712, )
+aug17 <- secr::read.capthist(captfile =  file.path(wd, "CAPTURE1.txt"),
+                               trapfile = file.path(wd, "TRAPS1.txt"))
+trapPoints <- traps(aug17)
+trapPointsOK <- vect(as.data.frame(trapPoints), geom=c("x", "y"), crs=crs(meio), keepgeom=FALSE)
+plot(meio, col = "lightblue")
+plot(trapPointsOK, add = TRUE, col = "red")
+```
+
+We then check if the traps are located correctly in the shapefile.
+
+```{r testMask, echo = TRUE, eval=FALSE}
+clippedmask <- make.mask(trapPoints, type = 'trapbuffer', 
+                         buffer = 200, poly = meio)
+par(mfrow = c(1,1), mar = c(1,1,1,1))
+plot(clippedmask, border = 100, ppoly = FALSE)
+gm <- as.data.frame(geom(meio))
+polygon(data.frame(x = gm$x, y = gm$y), col = 'lightgreen', border = NA)
+plot(clippedmask, dots = FALSE, mesh = grey(0.4), col = NA, polycol = 'blue', add = TRUE)
+plot(trapPoints, detpar = list(pch = 16, cex = 0.8), add = TRUE)
+```
+
+Everything seems to be fine. Now we can perform our analysis.
+
+## Meio, August 2017 - First monitoring campaign
+
+```{r aug17, echo = TRUE, include = FALSE}
+
+aug17 <- secr::read.capthist(captfile =  file.path(wd, "CAPTURE1.txt"),
+                               trapfile = file.path(wd, "TRAPS1.txt")) # We have already read the file before so we could extract the trap's information. Here it is again for consistency.
+summary(aug17)
+
+g0.1 <- secr.fit(aug17, model = list(g0 ~ 1, sigma ~ 1), CL = TRUE,
+                 verify = TRUE, mask = clippedmask)
+
+densityAUG17 <- derived(g0.1)
+densityAUG17
+```
+
+We tested different model formulations (i.e., landscape covariates and also 
+different buffers; see previous commits to see code).  
+Model diagnostics (i.e., AIC) supported the use of the simplest model (i.e., 
+detection probability doesn't change), and the island shapefile as a mask. 
+Applying the mask or buffer of 200 didn't change the results, but other buffers 
+did.
+
+Home range results (sigma estimate, lcl = lowe95%CI; ucl = upper95%CI):
+```{r, echo = FALSE}
+knitr::kable(summary(g0.1)$predicted)
+```
+
+Density results (D estimate, lcl = lowe95%CI; ucl = upper95%CI):
+```{r, echo = FALSE}
+knitr::kable(densityAUG17)
+```
+
+## Meio, October 2017 - Second monitoring campaign
+
+```{r oct17, echo = TRUE, include = FALSE}
+oct17 <- secr::read.capthist(captfile =  file.path(wd, "CAPTURE2.txt"),
+                               trapfile = file.path(wd, "TRAPS2.txt"))
+summary(oct17)
+g0.2 <- secr.fit(oct17, model = list(g0 ~ 1, sigma ~ 1), CL = TRUE,
+                 verify = TRUE, mask = clippedmask)
+
+densityOCT17 <- derived(g0.2)
+densityOCT17
+```
+
+Double checking where the traps are located  
+
+```{r testMask2, echo = TRUE, eval=FALSE}
+trapPoints <- traps(oct17)
+par(mfrow = c(1,1), mar = c(1,1,1,1))
+plot(clippedmask, border = 100, ppoly = FALSE)
+gm <- as.data.frame(geom(meio))
+polygon(data.frame(x = gm$x, y = gm$y), col = 'lightgreen', border = NA)
+plot(clippedmask, dots = FALSE, mesh = grey(0.4), col = NA, polycol = 'blue', add = TRUE)
+plot(trapPoints, detpar = list(pch = 16, cex = 0.8), add = TRUE)
+```
+
+Home range results (sigma estimate, lcl exce= lowe95%CI; ucl = upper95%CI):
+```{r, echo = FALSE}
+knitr::kable(summary(g0.2)$predicted)
+```
+
+Density results (D estimate, lcl = lowe95%CI; ucl = upper95%CI):
+```{r, echo = FALSE}
+knitr::kable(densityOCT17)
+```
+
+# Building final plot
+
+First, we need to put both results for the rats together to pass to the final plotting 
+function:
+
+```{r plotPopGrowth}
+plotGrowth <- plotPopulationGrowth(dataset = changeInPopulation)
+```
+
+At last, we build a plot to show the difference in growth rate through time in function 
+of time since eradication (TSE) using the control to control for seasonality. We use growth 
+rate instead of other parameters (i.e., population density) due to the compounded uncertainty 
+in the last due to both uncertainty in initial population and population growth rate.  
+Moreover, growth rate shows exactly what we sought with the current work, the population trend 
+through time.
+
+```{r plotPopGrowth}
+plotGrowth <- plotPopulationGrowth(dataset = changeInPopulation)
+```
+
+***ADD TO PAPER (TABLE) THAT POPULATION DENSITY IS BASED ON AVERAGE INITIAL POPULATION AND DO NOT 
+ACCOUNT FOR THE ORIGINAL UNCERTAINTY IN THIS PARAMETER, BUT ONLY ON THE UNCERTAINTY IN POP GROWTH RATE.
+MAYBE EXCLUDE THIS ALL TOGETHER. FEELING THIS MIGHT BE TRICKY.***
