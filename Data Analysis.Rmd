@@ -178,50 +178,10 @@ used as a stand-alone, independent dataset. This was done due to the adjustments
 needed on number and disposition of traps for each new monitoring campaign, as 
 described in the manuscript. As rats were only captured in the first two campaigns, 
 despite increase trapping effort on the third campaign, only these two were modeled.  
+The function `getRatDensity()` performs all necessary steps, with comments.
 
-Before we model rat abundance, we prepare a mask of the island so the analysis 
-occurs only on the island area. This is recommended for island environments due 
-to potential edge effects.
-
-```{r mask, echo = TRUE, include = FALSE}
-PARNA <- terra::vect(file.path(wd, "Geomorfology.shp")) 
-meio <- subset(PARNA, PARNA$AREA_HA == 17.034712, )
-aug17 <- secr::read.capthist(captfile =  file.path(wd, "CAPTURE1.txt"),
-                               trapfile = file.path(wd, "TRAPS1.txt"))
-trapPoints <- traps(aug17)
-trapPointsOK <- vect(as.data.frame(trapPoints), geom=c("x", "y"), crs=crs(meio), keepgeom=FALSE)
-plot(meio, col = "lightblue")
-plot(trapPointsOK, add = TRUE, col = "red")
-```
-
-We then check if the traps are located correctly in the shapefile.
-
-```{r testMask, echo = TRUE, eval=FALSE}
-clippedmask <- make.mask(trapPoints, type = 'trapbuffer', 
-                         buffer = 200, poly = meio)
-par(mfrow = c(1,1), mar = c(1,1,1,1))
-plot(clippedmask, border = 100, ppoly = FALSE)
-gm <- as.data.frame(geom(meio))
-polygon(data.frame(x = gm$x, y = gm$y), col = 'lightgreen', border = NA)
-plot(clippedmask, dots = FALSE, mesh = grey(0.4), col = NA, polycol = 'blue', add = TRUE)
-plot(trapPoints, detpar = list(pch = 16, cex = 0.8), add = TRUE)
-```
-
-Everything seems to be fine. Now we can perform our analysis.
-
-## Meio, August 2017 - First monitoring campaign
-
-```{r aug17, echo = TRUE, include = FALSE}
-
-aug17 <- secr::read.capthist(captfile =  file.path(wd, "CAPTURE1.txt"),
-                               trapfile = file.path(wd, "TRAPS1.txt")) # We have already read the file before so we could extract the trap's information. Here it is again for consistency.
-summary(aug17)
-
-g0.1 <- secr.fit(aug17, model = list(g0 ~ 1, sigma ~ 1), CL = TRUE,
-                 verify = TRUE, mask = clippedmask)
-
-densityAUG17 <- derived(g0.1)
-densityAUG17
+``` {r getRatD}
+blackRatData <- getRatDensity()
 ```
 
 We tested different model formulations (i.e., landscape covariates and also 
@@ -231,59 +191,7 @@ detection probability doesn't change), and the island shapefile as a mask.
 Applying the mask or buffer of 200 didn't change the results, but other buffers 
 did.
 
-Home range results (sigma estimate, lcl = lowe95%CI; ucl = upper95%CI):
-```{r, echo = FALSE}
-knitr::kable(summary(g0.1)$predicted)
-```
-
-Density results (D estimate, lcl = lowe95%CI; ucl = upper95%CI):
-```{r, echo = FALSE}
-knitr::kable(densityAUG17)
-```
-
-## Meio, October 2017 - Second monitoring campaign
-
-```{r oct17, echo = TRUE, include = FALSE}
-oct17 <- secr::read.capthist(captfile =  file.path(wd, "CAPTURE2.txt"),
-                               trapfile = file.path(wd, "TRAPS2.txt"))
-summary(oct17)
-g0.2 <- secr.fit(oct17, model = list(g0 ~ 1, sigma ~ 1), CL = TRUE,
-                 verify = TRUE, mask = clippedmask)
-
-densityOCT17 <- derived(g0.2)
-densityOCT17
-```
-
-Double checking where the traps are located  
-
-```{r testMask2, echo = TRUE, eval=FALSE}
-trapPoints <- traps(oct17)
-par(mfrow = c(1,1), mar = c(1,1,1,1))
-plot(clippedmask, border = 100, ppoly = FALSE)
-gm <- as.data.frame(geom(meio))
-polygon(data.frame(x = gm$x, y = gm$y), col = 'lightgreen', border = NA)
-plot(clippedmask, dots = FALSE, mesh = grey(0.4), col = NA, polycol = 'blue', add = TRUE)
-plot(trapPoints, detpar = list(pch = 16, cex = 0.8), add = TRUE)
-```
-
-Home range results (sigma estimate, lcl exce= lowe95%CI; ucl = upper95%CI):
-```{r, echo = FALSE}
-knitr::kable(summary(g0.2)$predicted)
-```
-
-Density results (D estimate, lcl = lowe95%CI; ucl = upper95%CI):
-```{r, echo = FALSE}
-knitr::kable(densityOCT17)
-```
-
 # Building final plot
-
-First, we need to put both results for the rats together to pass to the final plotting 
-function:
-
-```{r plotPopGrowth}
-plotGrowth <- plotPopulationGrowth(dataset = changeInPopulation)
-```
 
 At last, we build a plot to show the difference in growth rate through time in function 
 of time since eradication (TSE) using the control to control for seasonality. We use growth 
@@ -293,7 +201,8 @@ Moreover, growth rate shows exactly what we sought with the current work, the po
 through time.
 
 ```{r plotPopGrowth}
-plotGrowth <- plotPopulationGrowth(dataset = changeInPopulation)
+plotGrowth <- plotPopulationGrowth(wildlifeDataset = changeInPopulation, 
+                                   ratsDataset = blackRatData)
 ```
 
 ***ADD TO PAPER (TABLE) THAT POPULATION DENSITY IS BASED ON AVERAGE INITIAL POPULATION AND DO NOT 
