@@ -1,32 +1,37 @@
-calculatePopulationChange <- function(species, island = c("Ilha do Meio", 
-                                                          "Ilha Rata"),
+calculatePopulationChange <- function(species, island,
                                       envir = environment(),
-                                      rewriteTable = FALSE){
-  
-  outputsTable <- file.path("./outputs/outputsTable.csv")
+                                      rewriteTable = FALSE,
+                                      RobustDesign,
+                                      shortName){
+  if (any(length(species)>1,
+          length(island)>1,
+          length(shortName)>1)) stop("Please provide only one species and one island")
+  outputsTable <- file.path("outputs", paste0("outputsTable_",shortName,".csv"))
   if (any(!file.exists(outputsTable),
           rewriteTable)) {  
     listSpecies <- rbindlist(lapply(species, function(sp){
       listIsland <- rbindlist(lapply(island, function(isla){
-        spShort <- as.character(sapply(sp, switch,
-                                       "Elaenia ridleyana" = "elaenia",
-                                       "Trachylepis atlantica" = "mabuia",
-                                       "Johngarthia lagostoma" = "crab",
-                                       "Sula dactylatra" = "maskedBooby"))
-        islandShort <- as.character(sapply(isla, switch,
+        spShort <- unlist(sapply(sp, switch,
+                                 "Elaenia ridleyana" = "elaenia",
+                                 "Trachylepis atlantica" = "mabuia",
+                                 "Johngarthia lagostoma" = "crab",
+                                 "Sula dactylatra" = "maskedBooby", 
+                                 USE.NAMES = FALSE))
+        islandShort <- unlist(sapply(isla, switch,
                                            "Ilha Rata" = "Rata",
-                                           "Ilha do Meio" = "Meio"))
+                                           "Ilha do Meio" = "Meio", 
+                                     USE.NAMES = FALSE))
         if (islandShort == "Meio"){
           cyclesEach <- as.numeric(sapply(spShort, switch,
-                                          "elaenia" = c(1,2,4,5),
-                                          "mabuia" = c(1,2,4,4.1,5),
-                                          "crab" = c(1,2,2.1,4,4.1,5,5.1,6),
+                                          "elaenia" = if (RobustDesign) c(1,2,4,5) else c(1,1.1,2,2.1,4,4.1,5,5.1), 
+                                          "mabuia" = c(1,2,2.1,4,5), #c(1,2,4,4.1,5),
+                                          "crab" = c(1,1.1,2,2.1,4,4.1,5),#c(1,2,2.1,4,4.1,5,5.1,6),
                                           "maskedBooby" = c(1,2,4,5)))
         } else {
           cyclesEach <- as.numeric(sapply(spShort, switch,
-                                          "elaenia" = c(1,2,4,5),
-                                          "mabuia" = c(1,2,4,4.1,5,5.1),
-                                          "crab" = c(1,2,4,4.1,4.2,5,6),
+                                          "elaenia" = if (RobustDesign) c(1,2,4,5) else c(1,1.1,2,2.1,4,4.1,5,5.1),
+                                          "mabuia" = c(1,2,2.1,4,5,5.1), # c(1,2,4,4.1,5,5.1),
+                                          "crab" = c(1,2,2.1,2.2,4,5),# c(1,2,4,4.1,4.2,5,6),
                                           "maskedBooby" = c(1,2,4,5)))
         }
         resIsla <- get(paste0(spShort, islandShort), envir = envir)
@@ -44,9 +49,9 @@ calculatePopulationChange <- function(species, island = c("Ilha do Meio",
                                               browser()
                                             }
                                             popGrRate <- transpose(resIsla$populationGrowthRate[1:as.numeric(resIsla$samplingOccasions-1),])
-                                            browser () # NA is actually better in the end...
-                                            popGrRate <- cbind(rep(NA, NROW(popGrRate)), popGrRate)
-                                            colnames(popGrRate) <- c(paste0("Cycle_", 1:resIsla$samplingOccasions))
+                                            popGrRate <- cbind(popGrRate, rep(NA, NROW(popGrRate)))
+                                            # colnames(popGrRate) <- c(paste0("Cycle_", 1:resIsla$samplingOccasions))
+                                            colnames(popGrRate) <- c(paste0("Cycle_", round(cyclesEach, 1)))
                                             rownames(popGrRate) <- c("Predicted", "SE", "lower", "upper")
                                             estimate <- rep(as.numeric(popGrRate["Predicted",]), each = resIsla$numberOfSites)
                                             SE <- rep(as.numeric(popGrRate["SE",]), each = resIsla$numberOfSites)
@@ -75,7 +80,6 @@ calculatePopulationChange <- function(species, island = c("Ilha do Meio",
                                               SE <- rep(as.numeric(imm["SE",]), each = resIsla$numberOfSites)
                                               LCI <- rep(as.numeric(imm["lower",]), each = resIsla$numberOfSites)
                                               UCI <- rep(as.numeric(imm["upper",]), each = resIsla$numberOfSites)
-                                              
                                             } 
                                           }
                                           # AVERAGE DENSITY
@@ -91,25 +95,29 @@ calculatePopulationChange <- function(species, island = c("Ilha do Meio",
                                             newSE <- SE <- pop$densityM # Even though we have SE, lower and upper in  
                                             newLCI <- LCI <- pop$densityM # initial pop density, we can't use it for calculating density.
                                             newUCI <- UCI <- pop$densityM
-                                            for (occ in 1:(resIsla$samplingOccasions-1)) {
+                                            for (occ in 1:(length(colnames(popGrRate))-1)){
+                                            # for (occ in 1:(resIsla$samplingOccasions-1)) {
+                                            # for (occ in 1:length(colnames(popGrRate))) {
                                               # Density
-                                              newD <- newD*popGrRate["Predicted",paste0("Cycle_", occ)] # Make sure to check this is not constant through time...
+                                              # newD <- newD*popGrRate["Predicted",paste0("Cycle_", occ)]
+                                              newD <- newD*popGrRate["Predicted",colnames(popGrRate)[occ]] # Make sure to check this is not constant through time...
                                               estimate <- c(estimate, newD)
                                               # SE
-                                              newSE <- newSE*popGrRate["SE",paste0("Cycle_", occ)] # Make sure to check this is not constant through time...
+                                              newSE <- newSE*popGrRate["SE",colnames(popGrRate)[occ]] # Make sure to check this is not constant through time...
                                               SE <- c(SE, newSE)
                                               # LCI
-                                              newLCI <- newLCI*popGrRate["lower",paste0("Cycle_", occ)] # Make sure to check this is not constant through time...
+                                              newLCI <- newLCI*popGrRate["lower",colnames(popGrRate)[occ]] # Make sure to check this is not constant through time...
                                               LCI <- c(LCI, newLCI)
                                               # UCI
-                                              newUCI <- newUCI*popGrRate["upper",paste0("Cycle_", occ)] # Make sure to check this is not constant through time...
+                                              newUCI <- newUCI*popGrRate["upper",colnames(popGrRate)[occ]] # Make sure to check this is not constant through time...
                                               UCI <- c(UCI, newUCI)
                                             }
                                             # Check that the length of newD matches the expected length
-                                            if (length(estimate) != tr) 
-                                              stop(paste0("Length of PopulationDensity doesn't match expected length: ",
+                                            if (length(estimate) != tr){
+                                              message(paste0("Length of PopulationDensity doesn't match expected length: ",
                                                           tr,". Debug."))
-                                            
+                                              browser()
+                                            }
                                           }
                                           # WE HAVE THE 40 SITES then the 5 CYCLES:
                                           # cycle 1: sites 1 to 40,

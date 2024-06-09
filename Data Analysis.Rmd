@@ -70,14 +70,14 @@ by rats is high, we consider every sampling occasion as primary (i.e., open popu
 covariate for the time since the start of the eradication.
 
 ```{r mabuiaMeio}
-mabuiaMeio <- modelTerrestrials(DT = Data, island = "Ilha do Meio", 
+mabuiaMeio <- modelWildlife(DT = Data, island = "Ilha do Meio", 
                                 species = "Trachylepis atlantica")
 ```
 
 Now we will run the models for Mabuia for Ilha Rata (our control). 
 
 ```{r mabuiaRata}
-mabuiaRata <- modelTerrestrials(DT = Data, island = "Ilha Rata", 
+mabuiaRata <- modelWildlife(DT = Data, island = "Ilha Rata", 
                                 species = "Trachylepis atlantica")
 ```
 
@@ -100,14 +100,14 @@ primary sampling occasions (several weeks apart). First we ran the models for th
 island:  
 
 ```{r elaeniaMeio}
-elaeniaMeio <- modelTerrestrials(DT = Data, island = "Ilha do Meio", 
+elaeniaMeio <- modelWildlife(DT = Data, island = "Ilha do Meio", 
                                  species = "Elaenia ridleyana")
 ```
 
 And then for the Rata island:  
 
 ```{r elaeniaRata}
-elaeniaRata <- modelTerrestrials(DT = Data, island = "Ilha Rata", 
+elaeniaRata <- modelWildlife(DT = Data, island = "Ilha Rata", 
                                  species = "Elaenia ridleyana")
 ```
 
@@ -125,14 +125,14 @@ the NB model presented a smaller AIC, the dispersion parameter was not significa
 while the zero inflation was in the ZIP model. Therefore, we opted for a ZIP model.
 
 ```{r crabMeio}
-crabMeio <- modelTerrestrials(DT = Data, island = "Ilha do Meio", 
+crabMeio <- modelWildlife(DT = Data, island = "Ilha do Meio", 
                               species = "Johngarthia lagostoma")
 ```
 
 After modelling crabs for the Ilha do Meio, we perform the same analysis for Ilha Rata:
 
 ```{r crabRata}
-crabRata <- modelTerrestrials(DT = Data, island = "Ilha Rata", 
+crabRata <- modelWildlife(DT = Data, island = "Ilha Rata", 
                               species = "Johngarthia lagostoma")
 ```
 
@@ -144,14 +144,14 @@ do Meio (n = 7), and on the only breeding site on Ilha Rata. We used adult count
 as a proxy for breeding site quality.  
 
 ```{r crabMeio}
-maskedBoobyMeio <- modelTerrestrials(DT = Data, island = "Ilha do Meio", 
+maskedBoobyMeio <- modelWildlife(DT = Data, island = "Ilha do Meio", 
                                      species = "Sula dactylatra")
 ```
 
 After modelling crabs for the Ilha do Meio, we perform the same analysis for Ilha Rata:
 
 ```{r crabRata}
-maskedBoobyRata <- modelTerrestrials(DT = Data, island = "Ilha Rata", 
+maskedBoobyRata <- modelWildlife(DT = Data, island = "Ilha Rata", 
                                      species = "Sula dactylatra")
 ```
 
