@@ -43,72 +43,126 @@ wd <- file.path(getwd(), "data")
 
 After loading libraries and sourcing needed functions, we load the data and 
 format the information we need for the models. The 
-`dataCOUNTS.csv` file contains all data for the endangered species. For all species, 
+`finalDataCOUNTS.csv` file contains all data for the endangered species. For all species, 
 we used the N-mixture model described by Dail and Madsen (2011), which has been 
 incorporated into the R package `unmarked`. This model, ran using the function 
 `pcountOpen()`, allows for model formulations to identify population trends, 
-with and without immigration, and for covariates on initial population (described 
+with or without immigration, and for covariates on initial population (described 
 as lambda in the model), population growth (gamma), observation probabilities 
 (p) and immigration (iota), when this is considered. This model was chosen as it
 could be used for all species, as it also allows for different distributions 
 (i.e., Poisson, Negative Binomial and Zero Inflated). 
 
 ```{r loadAndCheckData}
-Data <- loadData(dataLocation = file.path(wd, "dataCOUNTS.csv"))
+Data <- loadData(dataLocation = file.path(wd, "finalDataCOUNTS.csv"))
+weatherData <- loadWeatherData(dataLocation = file.path(wd, "weatherNoronhaMar17Nov23.csv"))
 ```
+
+All model formulation's tested for all species are shown on Table X in the manuscript. 
+The best model for each species and island (i.e., Ilha Rata as Control, Ilha do Meio as Treatment) 
+was chosen based on Akaike Information Criterion (AIC) and the predictions for population growth rate 
+of Ilha do Meio for the best model were reduced by the predictions for population growth rate 
+of Ilha Rata. This ensured that drivers which could affect population growth in general in the region
+(i.e., extreme events, natural population variation cicles, among others) were eliminated. We then 
+plotted the results of all species (i.e., black rat density, and differential population growth rate
+ of mabuias, crabs, elaenia and masked booby) in the same plot, Figure X.  
 
 ## Mabuia  
 
-We will start our analysis with the Mabuia (Noronha Skink; *Trachylepis atlantica*).   
+We started our analysis with the Mabuia (Noronha Skink; *Trachylepis atlantica*).   
 
-First we will run the models for the Ilha do Meio. For the mabuia, Negative 
-Binomial Models would have been appropriate, as these model counts, especially if there is variability in the underlying rate of events. However, these are better suited for overdispersed data, which ours 
-isn't. Mabuia data is, however, Zero inflated. So ZIP models are more appropriate to use (see Kery, 
+For the mabuia, Negative Binomial Models would have been appropriate, as these model count data, 
+especially if there is variability in the underlying rate of events. However, these are better 
+suited for overdispersed data, which ours isn't. Mabuia data is, however, zero inflated. 
+So ZIP models are more appropriate to use (see Kery, 
 2018 and Stoklosa et al. 2022). Moreover, the mabuia population is closed to immigration, considering 
 the island is not close enough to others to allow for the species to immigrate. As the predation rate 
-by rats is high, we consider every sampling occasion as primary (i.e., open population) and add a 
-covariate for the time since the start of the eradication.
+by rats is high, we consider every sampling occasion as primary (i.e., open population). As we are 
+mainly interested in observing the effect of eradication on population growth rate, we added a covariate 
+for the time since the start of the eradication (TSE) for the model on Ilha do Meio, which could 
+influence population growth (i.e., gamma). Mabuia observation was performed by three different 
+researchers on both islands, and therefore, we also added researcherID as a covariate for detection. 
+Lastly, we also added the possibility of landscape cover influencing the initial population size 
+(i.e., lambda), as the number of individuals tends to be higher on densily vegetated areas (i.e., 
+more space due to verticalization) than on open areas.  
 
 ```{r mabuiaMeio}
-mabuiaMeio <- modelWildlife(DT = Data, island = "Ilha do Meio", 
-                                species = "Trachylepis atlantica")
+mabuiaMeio <- modelWildlife(DT = Data, 
+                            island = "Ilha do Meio",
+                            species = "Trachylepis atlantica",
+                            weatherData = weatherData, 
+                            useImmigration = FALSE, 
+                            useRobustDesign = FALSE)
+
 ```
 
-Now we will run the models for Mabuia for Ilha Rata (our control). 
+After running the model, we built and saved a table showing  species, island, cycle (matching Table 
+XX), site, landCover, variable, estimate, standardError, lower confidence interval (LCI), upper 
+confidence interval (UCI), modelType, modelFormulation, AIC, K, totalModelRuntime.
+
+```{r mabuiaMeio2}
+mabuiaMeioDT <- calculatePopulationChange(species = "Trachylepis atlantica",
+                                          island = "Ilha do Meio",
+                                          shortName = "Mabuia_Meio_",
+                                          RobustDesign = FALSE)
+```
+
+We then did the same for the mabuia on Ilha Rata:    
 
 ```{r mabuiaRata}
-mabuiaRata <- modelWildlife(DT = Data, island = "Ilha Rata", 
-                                species = "Trachylepis atlantica")
-```
+mabuiaRata <- modelWildlife(DT = Data, island = "Ilha Rata",
+                            species = "Trachylepis atlantica",
+                            weatherData = weatherData,
+                            useImmigration = FALSE, 
+                            useRobustDesign = FALSE)
 
-It is important to notice that a couple of the alternative models did not converge 
-throwing the error `Hessian is singular.`. This can happen for several reasons 
-but in the present case is likely due. Most models that failed had to the parameter 
-TSE when to gamma as a covariate, while one model failed with Julian Date. 
-Nonetheless, our best model did not have TSE as covariate.
+mabuiaRataDT <- calculatePopulationChange(species = "Trachylepis atlantica",
+                                          island = "Ilha Rata",
+                                          shortName = "Mabuia_Rata_",
+                                          RobustDesign = FALSE)
+```
 
 ## Elenia  
 
 Next, we will continue our analysis with the Cucuruta (Noronha Elaenia; *Elaenia ridleyana*).  
-The observation from Elaenias rendered data that did not present zero inflation. Therefore, 
-we used Poisson models, since the overdispersion was also not detected. Differently 
-from the Mabuia, the Elaenia does present movement (iota) between the islands, which 
-was modeled in the analysis. As we believe the effects of rats on the Elaenia is 
-likely restricted to small chicks and eggs, we used the robust design, considering 
-a closed population within primary sampling occasions (two days in a row), and open between 
-primary sampling occasions (several weeks apart). First we ran the models for the Meio 
-island:  
+The observation from Elaenias also rendered data with zero inflation. Therefore, 
+we used a ZIP model. Our model also considers movement (iota) between the islands to be absent. 
+Although there is evidence of a single individual flying from the archipelago to the Atol das Rocas,
+approximately 145km away, the species has been observed in only 3 of the 26 islands and islets of 
+Noronha. For this species, we used a robust design as we performed temporal replicates on the same 
+day, considering a closed population within primary sampling occasions (sampling period within the 
+same day), and open between primary sampling occasions (more than a day 
+apart). Being an insectivore, we added the total amount of rainfall in the three months previous to 
+the count as a covariate that could influence population growth, apart from TSE for Ilha do Meio. 
+As the species was only observed in forest fragments and only by one researcher, neither landscape 
+cover nor observerID were added as covariates. First we ran the models for Ilha do Meio:
 
 ```{r elaeniaMeio}
-elaeniaMeio <- modelWildlife(DT = Data, island = "Ilha do Meio", 
-                                 species = "Elaenia ridleyana")
+elaeniaMeio <- modelWildlife(DT = Data, island = "Ilha do Meio",
+                             species = "Elaenia ridleyana",
+                             weatherData = weatherData,
+                             useImmigration = FALSE,
+                             useRobustDesign = TRUE)
+
+elaeniaMeioDT <- calculatePopulationChange(species = "Elaenia ridleyana",
+                                          island = "Ilha do Meio",
+                                          shortName = "Elaenia_Meio_",
+                                          RobustDesign = TRUE)
 ```
 
-And then for the Rata island:  
+And then for Ilha Rata:  
 
 ```{r elaeniaRata}
-elaeniaRata <- modelWildlife(DT = Data, island = "Ilha Rata", 
-                                 species = "Elaenia ridleyana")
+elaeniaRata <- modelWildlife(DT = Data, island = "Ilha Rata",
+                             species = "Elaenia ridleyana",
+                             weatherData = weatherData,
+                             useImmigration = FALSE,
+                             useRobustDesign = TRUE)
+
+elaeniaRataDT <- calculatePopulationChange(species = "Elaenia ridleyana",
+                                          island = "Ilha Rata",
+                                          shortName = "Elaenia_Rata_",
+                                          RobustDesign = TRUE)
 ```
 
 ## Land Crab  
@@ -117,23 +171,39 @@ The analysis of land crabs (*Johngarthia lagostoma*) was then performed. This
 species is known to present increase movement during breeding season. Lesser 
 wave action associated with neap high tides (in first and last quarters of moon 
 cycle) seem to be preferred. In the same way, peak periods of rain (i.e., March 
-or April) also seem to be important factors for these movements. Therefore, we 
-added the moon phase to this dataset to use it as a covariate in the model. The 
-rainy season should be covered by the covariate JulianDate. Crab data is also 
+or April) also seem to be important factors for this species' movement. Therefore, we 
+added the moon phase and total rainfall in the three previous months as covariates influencing 
+population growth and observation, apart from apart from TSE for Ilha do Meio. Crab data is also 
 zero inflated, so we tested both ZIP and NB models. Similarly to Mabuia, although 
 the NB model presented a smaller AIC, the dispersion parameter was not significant, 
-while the zero inflation was in the ZIP model. Therefore, we opted for a ZIP model.
+while the zero inflation was in the ZIP model. Therefore, we opted for a ZIP model. It is important 
+to notice that the models for this species did not converge throwing the error `Hessian is singular.`. 
+This generally happens when parameters are non-identifiable. 
 
 ```{r crabMeio}
 crabMeio <- modelWildlife(DT = Data, island = "Ilha do Meio", 
-                              species = "Johngarthia lagostoma")
+                              species = "Johngarthia lagostoma",
+                             weatherData = weatherData,
+                             useImmigration = FALSE,
+                             useRobustDesign = FALSE,
+                          starts=c(4.307, 0.0963, -3.816, -2.47))
+# Get for 
+# ZIP:
+# NB:
+# P:
+# each one of the existing models... Ugh. Or... just check if the model of interest ("lam(landscapeCover)gamma(.)p(totalRainfallThreeMonths+moonPhase)iota(.)")
+# has different estimates than with the values. Maybe just implement for it?!
+# starts <- c(4.307,-0.413,1.317,0.0963,-3.816,0.733,-0.394,-2.47)
 ```
 
 After modelling crabs for the Ilha do Meio, we perform the same analysis for Ilha Rata:
 
 ```{r crabRata}
 crabRata <- modelWildlife(DT = Data, island = "Ilha Rata", 
-                              species = "Johngarthia lagostoma")
+                              species = "Johngarthia lagostoma",
+                             weatherData = weatherData,
+                             useImmigration = FALSE,
+                             useRobustDesign = FALSE)
 ```
 
 ## Masked Booby
@@ -145,14 +215,20 @@ as a proxy for breeding site quality.
 
 ```{r crabMeio}
 maskedBoobyMeio <- modelWildlife(DT = Data, island = "Ilha do Meio", 
-                                     species = "Sula dactylatra")
+                                     species = "Sula dactylatra",
+                             weatherData = weatherData,
+                             useImmigration = TRUE,
+                             useRobustDesign = FALSE)
 ```
 
 After modelling crabs for the Ilha do Meio, we perform the same analysis for Ilha Rata:
 
 ```{r crabRata}
 maskedBoobyRata <- modelWildlife(DT = Data, island = "Ilha Rata", 
-                                     species = "Sula dactylatra")
+                                     species = "Sula dactylatra",
+                             weatherData = weatherData,
+                             useImmigration = TRUE,
+                             useRobustDesign = FALSE)
 ```
 
 ### NEXT STEPS
@@ -163,10 +239,13 @@ Rata).
 
 ```{r changeInPopulationDensity}
 changeInPopulation <- calculatePopulationChange(species = c("Trachylepis atlantica",
-                                                            "Elaenia ridleyana"#,
-                                                            # "Johngarthia lagostoma",
-                                                            # "Sula dactylatra"
-                                                            ))
+                                                            "Elaenia ridleyana",
+                                                            "Johngarthia lagostoma",
+                                                            "Sula dactylatra"
+                                                            ), 
+                                                island = "Ilha do Meio", 
+                                                shortName = "Mabuia_Meio_", 
+                                                RobustDesign = FALSE)
 ```
 
 # Rat population modeling

@@ -44,7 +44,6 @@ plotPopulationGrowth <- function(wildlifeDataset, ratsDataset,
   finalDT[, species := factor(species, levels = c(spWd, spR))]
   browser()
   # TRY OTHER MEASURES BECAUSE OF THE FIRST CYCLE OR INSTEAD OF DOING IT 'NA', MAKE THE LAST ONE 'NA'
-  # Fix Elaenia. Models are garbage!! Maybe without immigration?
   plotCols <- c("darkgreen", "lightblue")
   p <- ggplot(finalDT, aes(x = cycle, y = estimate)) +
       geom_line(aes(color = island), lwd = 1.5) + 

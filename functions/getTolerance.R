@@ -4,9 +4,10 @@ getTolerance <- function(sp, isld){
                           rep("elaenia", times = 2),
                           rep("mabuia", times = 2)),
                    island = rep(c("Meio", "Rata"), times = 4),
-                   tolerance = c(0.1, 0.8,
-                                 0.1, 0.8,
-                                 0.5, 0.5,
-                                 0.1, 0.1))
+                   tolerance = rep(0.9, times = 8))
+                   # tolerance = c(0.1, 0.8,
+                   #               0.1, 0.8,
+                   #               0.5, 0.5,
+                   #               0.1, 0.1))
  return(dt[species == sp & island == isld, tolerance])
 }

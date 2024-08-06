@@ -28,71 +28,59 @@ weatherData <- loadWeatherData(dataLocation = file.path(wd, "weatherNoronhaMar17
 
 fullComb <- data.table(expand.grid(Species = c("Trachylepis atlantica",
                                                "Elaenia ridleyana",
+                                               "Elaenia ridleyana",
                                                "Johngarthia lagostoma",
+                                               "Sula dactylatra",
                                                "Sula dactylatra"),
                                    Island = c("Ilha do Meio", 
                                               "Ilha Rata")))
 fullComb[, shortSpIsland := c("mabuiaMeio", 
                               "elaeniaMeio",
+                              "elaeniaMeio",
                               "crabMeio", 
+                              "maskedBoobyMeio",
                               "maskedBoobyMeio",
                               "mabuiaRata", 
                               "elaeniaRata",
+                              "elaeniaRata",
                               "crabRata", 
+                              "maskedBoobyRata",
                               "maskedBoobyRata")]
 fullComb[, rbstDsgn := c(rep(FALSE, times = 1), 
-                         rep(TRUE, times = 1),
-                         rep(FALSE, times = 3),
-                         rep(TRUE, times = 1),
-                         rep(FALSE, times = 2)
+                         rep(TRUE, times = 2),
+                         rep(FALSE, times = 4),
+                         rep(TRUE, times = 2),
+                         rep(FALSE, times = 3)
 )]
-fullComb[, immgrt := c(rep(FALSE, times = 3),
+fullComb[, immgrt := c(rep(FALSE, times = 2),# Meio
                        rep(TRUE, times = 1),
-                       rep(FALSE, times = 3),
+                       rep(FALSE, times = 2),
+                       rep(TRUE, times = 1),
+                       rep(FALSE, times = 2),# Rata
+                       rep(TRUE, times = 1),
+                       rep(FALSE, times = 2),
                        rep(TRUE, times = 1)
 )]
 
-finalTableName <- file.path("outputs/finalTable.csv")
+fullComb2 <- fullComb[Species == "Elaenia ridleyana",]
 
-runParallel <- TRUE
-
-
-if (!file.exists(finalTableName)){
-  if (runParallel){
-    nCoresNeeded <- NROW(fullComb)
-    nCoresAvail <- min(parallel::detectCores() - 3, getOption("NCONNECTIONS", 120L))
-    nCores2Use <- min(nCoresNeeded, nCoresAvail)
-    plan("multicore", workers = nCores2Use)
-    t1 <- Sys.time()
-    tb <- rbindlist(future_lapply(
-      1:NROW(fullComb),
-      function(index) {
-        modelAndSummary(
-          ROW = index,
-          fullComb = fullComb,
-          Data = Data,
-          weatherData = weatherData
-        )
-      }
-    ))
-    plan("sequential")
-    
-  } else {
-    t1 <- Sys.time()
-    tb <- rbindlist(lapply(
-      1:NROW(fullComb),
-      function(index) {
-        modelAndSummary(
-          ROW = index,
-          fullComb = fullComb,
-          Data = Data,
-          weatherData = weatherData
-        )
-      }
-    ))
+nCoresNeeded <- NROW(fullComb2)
+nCoresAvail <- min(parallel::detectCores() - 3, getOption("NCONNECTIONS", 120L))
+nCores2Use <- min(nCoresNeeded, nCoresAvail)
+plan("multicore", workers = nCores2Use)
+t1 <- Sys.time()
+tb <- rbindlist(future_lapply(
+  1:NROW(fullComb2),
+  function(index) {
+    modelAndSummary(
+      ROW = index,
+      fullComb = fullComb2,
+      Data = Data,
+      weatherData = weatherData,
+      rerunModels = TRUE,
+      reRunK = TRUE,
+      rewriteTable = TRUE
+    )
   }
-  write.csv(tb, finalTableName)
-} else {
-  tb2 <- fread(finalTableName)
-}
- 
+))
+plan("sequential")

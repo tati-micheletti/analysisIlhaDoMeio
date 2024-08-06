@@ -2,14 +2,17 @@ calculatePopulationChange <- function(species, island,
                                       envir = environment(),
                                       rewriteTable = FALSE,
                                       RobustDesign,
-                                      shortName){
+                                      shortName, 
+                                      Data # Data here is to calculate which cycle the results belong to
+                                      ){
   if (any(length(species)>1,
           length(island)>1,
           length(shortName)>1)) stop("Please provide only one species and one island")
   outputsTable <- file.path("outputs", paste0("outputsTable_",shortName,".csv"))
-  if (any(!file.exists(outputsTable),
-          rewriteTable)) {  
-    listSpecies <- rbindlist(lapply(species, function(sp){
+  # if (any(!file.exists(outputsTable),
+  #         rewriteTable)) {  
+  if (TRUE) {   
+  listSpecies <- rbindlist(lapply(species, function(sp){
       listIsland <- rbindlist(lapply(island, function(isla){
         spShort <- unlist(sapply(sp, switch,
                                  "Elaenia ridleyana" = "elaenia",
@@ -23,15 +26,15 @@ calculatePopulationChange <- function(species, island,
                                      USE.NAMES = FALSE))
         if (islandShort == "Meio"){
           cyclesEach <- as.numeric(sapply(spShort, switch,
-                                          "elaenia" = if (RobustDesign) c(1,2,4,5) else c(1,1.1,2,2.1,4,4.1,5,5.1), 
-                                          "mabuia" = c(1,2,2.1,4,5), #c(1,2,4,4.1,5),
-                                          "crab" = c(1,1.1,2,2.1,4,4.1,5),#c(1,2,2.1,4,4.1,5,5.1,6),
+                                          "elaenia" = c(1,2,4,5,6,7,8,9,10,11,12,13,14,15), # All data -- elaenia can only have robust design due to temporal replicates
+                                          "mabuia" = c(1,2,2.1,4,5),
+                                          "crab" = c(1,1.1,2,2.1,4,4.1,5),
                                           "maskedBooby" = c(1,2,4,5)))
         } else {
           cyclesEach <- as.numeric(sapply(spShort, switch,
-                                          "elaenia" = if (RobustDesign) c(1,2,4,5) else c(1,1.1,2,2.1,4,4.1,5,5.1),
-                                          "mabuia" = c(1,2,2.1,4,5,5.1), # c(1,2,4,4.1,5,5.1),
-                                          "crab" = c(1,2,2.1,2.2,4,5),# c(1,2,4,4.1,4.2,5,6),
+                                          "elaenia" = c(1,2,4,5,6,7,8,9,10,11,12,13,14,15),  # All data -- elaenia can only have robust design due to temporal replicates
+                                          "mabuia" = c(1,2,2.1,4,5,5.1),
+                                          "crab" = c(1,2,2.1,2.2,4,5),
                                           "maskedBooby" = c(1,2,4,5)))
         }
         resIsla <- get(paste0(spShort, islandShort), envir = envir)
@@ -83,12 +86,12 @@ calculatePopulationChange <- function(species, island,
                                             } 
                                           }
                                           # AVERAGE DENSITY
-                                          Cover <- as.character(resIsla$cover)
+                                          landscapeCover <- as.character(resIsla$landscapeCover)
                                           Order <- 1:resIsla$numberOfSites
-                                          dtCO <- data.table(cover = Cover,
+                                          dtCO <- data.table(landscapeCover = landscapeCover,
                                                              order = Order)
-                                          pop <- merge(resIsla$initialPopulationDensity[, c("cover", "densityM")],
-                                                       dtCO, by = "cover")
+                                          pop <- merge(resIsla$initialPopulationDensity[, c("landscapeCover", "densityM")],
+                                                       dtCO, by = "landscapeCover")
                                           setkey(pop, "order")
                                           if (param == "initialPopulationDensity"){
                                             newD <- estimate <- pop$densityM
@@ -126,7 +129,7 @@ calculatePopulationChange <- function(species, island,
                                                             island = rep(isla, times = tr),
                                                             cycle = rep(cyclesEach, each = resIsla$numberOfSites),
                                                             site = rep(1:resIsla$numberOfSites, times = resIsla$samplingOccasions),
-                                                            landCover = rep(pop$cover, times = resIsla$samplingOccasions),
+                                                            landCover = rep(pop$landscapeCover, times = resIsla$samplingOccasions),
                                                             variable = rep(param, times = tr),
                                                             estimate = estimate, # As the growth rate is between periods, this is only from second on,
                                                             standardError = SE,

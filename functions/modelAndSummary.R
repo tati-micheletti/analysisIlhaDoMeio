@@ -1,7 +1,11 @@
 modelAndSummary <- function(ROW,
                             fullComb,
                             Data,
-                            weatherData){
+                            weatherData,
+                            reRunK = FALSE,
+                            rerunModels = FALSE,
+                            rewriteTable = FALSE
+                            ){
   gc()
   sp <- as.character(fullComb[ROW, Species])
   isl <- as.character(fullComb[ROW, Island])
@@ -15,13 +19,16 @@ modelAndSummary <- function(ROW,
                                                species = sp,
                                                weatherData = weatherData,
                                                useImmigration = useImm,
-                                               useRobustDesign = useRbd)))
+                                               useRobustDesign = useRbd,
+                                               rerunModels = rerunModels, 
+                                               reRunK = reRunK)))
   print(shrt)
   changeInPopulation <- calculatePopulationChange(species = sp, 
                                                   island = isl,
                                                   shortName = paste(shrt, Rbd, Imm, sep = "_"),
                                                   envir = environment(),
-                                                  RobustDesign = useRbd)
+                                                  RobustDesign = useRbd,
+                                                  rewriteTable = rewriteTable)
   rm(shrt)
   gc()
   return(changeInPopulation)

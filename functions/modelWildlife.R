@@ -2,9 +2,9 @@
 modelWildlife <- function(DT, island, species, rerunModels = FALSE, 
                               reRunK = FALSE, plotting = FALSE,
                           weatherData, useImmigration,
-                          useRobustDesign){
+                          useRobustDesign, starts = NULL){
   
-  ###### GENERAL SETUP #####
+  ###### GENERAL SETUP ########################################################
   
   islandShort <-  if (island == "Ilha Rata") "Rata" else "Meio"
   spShort <-  if (species == "Elaenia ridleyana") "elaenia" else 
@@ -29,33 +29,18 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
       if (all(!useRobustDesign, useImmigration)) "Immig" else NULL
   individualModels <- paste("individualModels", addOns, sep = "_")
   
-  ###### PREPARE DATA #####
+  ###### END GENERAL SETUP ########################################################
   
-  # First we subset the data to the interested place and the species
-  # [UPDATE]: Now I am using real data from the metheorological station of the island. 
-  # Not necessary anymore to hardcode this below 
-  # if (spShort == "crab"){
-  #   wildlife <- DT[Species == species,]
-  #   datesForMoon <- sort(unique(wildlife$Date))
-  #   # These were manually added: https://www.webexhibits.org/calendars/moon.html
-  #   phasesOfMoon <- c("Waxing Gibbous Moon", "Full Moon", "Waning Crescent Moon",
-  #                     "Waning Crescent Moon", "New Moon Crescent Moon", "New Moon Crescent Moon",
-  #                     "Waxing Crescent Moon", "Waxing Gibbous Moon", "Waxing Gibbous Moon",
-  #                     "Full Moon", "Waning Crescent Moon", 
-  #                     "Waxing Crescent Moon")
-  #   moon <- data.table(Date = as.Date(datesForMoon),
-  #                      Moon = phasesOfMoon)
-  #   wildlifeMerged <- merge(wildlife, moon, by = "Date")
-  #   wildlife <- wildlifeMerged[Island == island,]
-  # } else {
+  ###### PREPARE DATA #############################################################
+
     wildlife <- DT[Island == island & Species == species,]
-    # }
-  
+
   # Collate DT with weatherData
   ### Create totalRainfallThreeMonths from precip
   # 1. Create in the wildlife the column "startDate", which is 3 months from the "Date"
   wildlife[, startDate := Date-91]
   allDates <- weatherData$Date
+  
   # 2. For each row in wildlife: 
   for (row in 1:NROW(wildlife)){
   #  2.1. Subset on weatherData the values for precip in which the "weatherData$Date" 
@@ -72,7 +57,8 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
   # 2.1. While at each row to do the previous, match "wildlife$Date" and "weatherData$Date" 
   #      getting `moonphase` and fill the new `moonphase` variable in wildlife with the 
   #      value from weatherData  
-    wildlife[row, moonphase := weatherData[Date == currentDate, moonphase]]
+  wildlife[row, moonphase := weatherData[Date == currentDate, moonphase]]
+
   }  
 # If seabird species, use the whole island for observation as the whole island 
   # is walked for survey. Area here in meters, except for seabirds, which is m2. 
@@ -85,71 +71,94 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
   wildlife <- wildlife[, (toRemove) := NULL]
   
   # Now we make the needed objects:
+
   # y --> Matrix with observations where rows represent each Site (unmarked calls this 'M'), and columns the 
   # (increasing) sampling occasion (i.e., the time series of counts, representing 
   # each visit), which unmarked calls 'T'. The value is the Counts.
-  finalCounts <- dcast(wildlife, Site ~ Date, value.var = "Counts")
-  y <- as.matrix(finalCounts[,-1]) # Convert to matrix
   
-  # obsCov --> Observation covariates are the ones that vary per sampling occasion.
-  # This object is a named list of each covariate, which are data frames of rows 
-  # representing each Site and the columns each sampling occasion. 
-  # Examples are: observerID, totalRainfallThreeMonths, TSE
-  totalRainfallThreeMonths <- as.matrix(dcast(wildlife, Site ~ Date, value.var = "totalRainfallThreeMonths")[,-1])
-  TSE <- as.matrix(dcast(wildlife, Site ~ Date, value.var = "timeSinceStartEradication")[,-1])
-  
-  # Fill in the matrix of totalRainfallThreeMonths and TSE: this affects the models later on
-  totalRainfallThreeMonths <- replaceNAwithColMean(totalRainfallThreeMonths)
-  TSE <- replaceNAwithColMean(TSE)
-
-  if (spShort %in% c("elaenia", "maskedBooby")) {
-    obsCovs <- list(totalRainfallThreeMonths = totalRainfallThreeMonths,
-                    TSE = TSE)
-  } else {
-    if (spShort == "crab"){
-      moonPhase <- replaceNAwithColMean(as.matrix(dcast(wildlife, Site ~ Date, value.var = "moonphase")[,-1]))
-      obsCovs <- list(totalRainfallThreeMonths = totalRainfallThreeMonths,
-                      TSE = TSE,
-                      moonPhase = moonPhase)
-    } else { # Mabuia
-        observerID <- as.matrix(dcast(wildlife, Site ~ Date, value.var = "Observer")[,-1])
-        obsCovs <- list(totalRainfallThreeMonths = totalRainfallThreeMonths,
-                        TSE = TSE,
-                        observerID = observerID)
+  finalCounts <- tryCatch(
+    {
+      dcast(wildlife, Site ~ Date, value.var = "Counts")
+    },
+    message = function(m) {
+      if (all(conditionMessage(m) == "Aggregate function missing, defaulting to 'length'\n",
+              length(unique(wildlife[["Site"]])) == 1)){
+        return(list(finalCounts = transpose(wildlife[, c("Date", "Counts")]),
+               howManySecondary = as.numeric(suppressMessages(dcast(wildlife, Site ~ Date, value.var = "Counts"))[, Site := NULL])))
+      } else {
+        stop("Something went wrong with the data. Debug")
+      }
+      
     }
+  )
+  if (is(finalCounts, "list")){
+    howManySecondary <- finalCounts$howManySecondary
+    fc <- finalCounts$finalCounts[2,]
+    names(fc) <- paste0(wildlife[["Date"]])
+    y <- as.matrix(fc)
+  } else {
+    howManySecondary <- NULL
+    y <- as.matrix(finalCounts[,-1]) # Convert to matrix
   }
 
-  # siteCovs --> Site covariates are fixed through time, varying only among each 
+  ###### END PREPARE DATA #############################################################
+  
+  #### BUILDING COVARIATE DATA #######################################################
+  
+  ### 1. siteCovs ###
+  
+  # Site covariates are fixed through time, varying only among each 
   # other. This object is matrix where rows representing each Site and the columns 
   # each covariate. 
-  # Examples are: Cover (landscape type)
-  coverRaw <- dcast(wildlife, Site ~ Date, value.var = "Landscape")
-  # For each row I need the unique value of cover without NA:
-  cover <- data.frame(cover = unlist(lapply(1:NROW(coverRaw), 
-                                            function(r){
-                                              unique(na.omit(as.character(coverRaw[r,2:NCOL(coverRaw)])))
-                                            })))
-  # numPrimary --> Number of primary periods
-  numPrimary <- NCOL(y)
-  if (spShort == "elaenia"){
-    # In the case of Elenia, we have 2 counts (i.e., secondary 
-    # periods) per primary occasion
-    # Since the closed periods are really close, we can use one variable for both days 
-    # (yearlySiteCovs). To do this, we need to get the mean of every n columns (n =
-    # secondary periods, or 2 in our case). I will do this using a loop
-    
-    # ROBUST DESIGN
-    if (useRobustDesign){
-      numPrimary <- numPrimary/2
-      yearlySiteCovs <- list(totalRainfallThreeMonths = as.matrix(joinCols(y = y, DT = totalRainfallThreeMonths,
-                                                             numPrimary = numPrimary)),
-                             TSE = as.matrix(joinCols(y = y, DT = TSE,
-                                                      numPrimary = numPrimary)))
-    } else {
-      yearlySiteCovs <- list(totalRainfallThreeMonths = totalRainfallThreeMonths,
-                             TSE = TSE)
-    }
-  } else {
+  # Examples are: landscapeCover (landscape type)
+  
+  wildlife2 <- unique(wildlife[, c("Landscape", "Site", "Date")]) # This is needed for all robust 
+  # designs (i.e., Elaenia) and doesn't mess up the non-robust designs
+  # In this case, doing a dcast is flawed because we have many repetitions of the same
+  # cover, which is a character. So it doesn't work. It only works in cases where there is not 
+  # more than one count per day per site.
+  # NOTE: This might work for the others too. Need testing.
+  coverRaw <- dcast(wildlife2, Site ~ Date, value.var = "Landscape")
+  
+  # For each row I need the unique value of landscapeCover without NA:
+  landscapeCover <- data.frame(landscapeCover = unlist(lapply(1:NROW(coverRaw), 
+                                                              function(r){
+                                                                unique(na.omit(as.character(coverRaw[r,2:NCOL(coverRaw)])))
+                                                              })))
+  ### 2. obsCov ###
+   
+  # Observation covariates are the ones that vary per sampling occasion (for each 
+  # individual count). This object is a named list of each covariate, which are data frames of rows 
+  # representing each Site and the columns each sampling occasion. 
+  # Examples are: observerID
+
+  obsCovs <- list(observerID = suppressMessages(as.matrix(dcast(wildlife, Site ~ Date, value.var = "Observer")[,-1])))
+    if (spShort == "mabuia"){
+      if (is.numeric(obsCovs)){
+        stop(paste0("obsCovs (i.e., observerID) is numeric. It shouldn't! Mabuia is the only one which uses it,",
+                    "and shouldn't have more than one observation per place per occasion. "))
+      } 
+  } else obsCovs <- NULL
+
+
+  ### 3. yearlySiteCovs ###
+   
+  # Observation covariates are the ones that vary per occasion (one day, 
+  # one measurement; or one year, one measurement). This object is a named list of each covariate, 
+  # which are data frames of rows representing each Site and the columns each sampling occasion. 
+  # Examples are: totalRainfallThreeMonths, TSE
+  
+  totalRainfallThreeMonths <- replaceNAwithColMean(as.matrix(dcast(wildlife, Site ~ Date, 
+                                              value.var = "totalRainfallThreeMonths", 
+                                              fun.aggregate = mean)[,-1]))
+
+  TSE <- replaceNAwithColMean(as.matrix(dcast(wildlife, Site ~ Date, 
+                                              value.var = "timeSinceStartEradication", 
+                                              fun.aggregate = mean)[,-1]))
+  
+  moonPhase <- replaceNAwithColMean(as.matrix(dcast(wildlife, Site ~ Date, 
+                                                    value.var = "moonphase", 
+                                                    fun.aggregate = mean)[,-1]))
     if (spShort == "crab"){
     yearlySiteCovs <- list(moonPhase = moonPhase,
                            totalRainfallThreeMonths = totalRainfallThreeMonths,
@@ -158,11 +167,31 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
       yearlySiteCovs <- list(totalRainfallThreeMonths = totalRainfallThreeMonths,
                              TSE = TSE)
     }
-  }
+  
+  # numPrimary --> Number of primary periods
+  numPrimary <- NCOL(y)
+  if (useRobustDesign){
+    # In the case of Elenia, we have several counts (i.e., secondary 
+    # periods) per primary occasion (robust design)
+    # Since the closed periods are really close (30 min), we can use one variable per day 
+    # (yearlySiteCovs). To do this, we need to get the mean of every n columns (n =
+    # secondary periods, or 2 in our case). I will do this using a loop
+    
+    # I need to identify how many counts I had per period for elaenia, for example.
+    # We have one one point per island, and repeated counts on it (across the same day or across 2 days)
+    # But the number (n=8) of  temporal replicates changes after 2018. From 2019 on, we have 8 or 
+    # 10 for Meio and 10 for Rata. So we need to fix this adding NA's to the column which have less data.
+    newY <- prepareYforRD(howManySecondary = howManySecondary,
+                          y = y)
+    y <- matrix(newY, nrow = length(unique(wildlife[["Site"]])))
+    numPrimary <- length(y)/max(howManySecondary) 
+  } 
 
-  # Create the unmarkedFrame
+#### END BUILDING COVARIATE DATA ##########################################
+
+# Create the unmarkedFrame
   wildlifeDF <- unmarkedFramePCO(y = y,
-                               siteCovs = cover,
+                               siteCovs = landscapeCover,
                                obsCovs = obsCovs,
                                numPrimary = numPrimary,
                                yearlySiteCovs = yearlySiteCovs
@@ -172,7 +201,8 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
   summary(wildlifeDF)
   ######
   
-  ###### NULL MODELS #####
+  ###### NULL MODELS #######################################
+  
   # Here we test for Zero Inflation on the data
   pZI1 <- test_ZI(dts = na.omit(as.numeric(y)))
   
@@ -200,6 +230,13 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
     t0 <- Sys.time()
     nullModsNames <- c("NB", "ZIP", "P")
     nullModels <- lapply(nullModsNames, function(nullModType){
+      print(paste0("Running ", nullModType," model"))
+      if (all(!is.null(starts),
+          nullModType == "P")){
+        startsN <- starts[1:(length(starts)-1)]
+      } else {
+        startsN <- starts
+      }
       nM <- pcountOpen(lambdaformula = ~1,  # Initial abundance
                        gammaformula = ~1,  # Formula for population growth rate
                        omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
@@ -209,6 +246,7 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
                        mixture = nullModType, # Negative binomial
                        dynamics = "trend", # We want the population trend through time
                        immigration = useImmigration,
+                       starts = startsN,
                        K = K1)
       return(nM)
     })
@@ -248,9 +286,14 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
   }
     message(paste0("Type of model for ", spShort, " for ", island, 
                    " was determined as ", modType))
-  ######
+    if (all(!is.null(starts),
+      modType == "P")){
+      starts <- starts[1:(length(starts)-1)]
+    }
   
-  ###### MODELS #####
+  ###### END NULL MODELS #######################################
+  
+  ###### MODELS ################################################
   wildlife_models <- file.path(reproducible::checkPath(file.path("./outputs", individualModels), 
                                                        create = TRUE), paste0(spShort,"_",islandShort,"_models.qs"))
   wildlife_models_t <- file.path(reproducible::checkPath(file.path("./outputs", individualModels), 
@@ -289,6 +332,7 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
                               mixture = modType,
                               dynamics = "trend", # We want the population trend through time
                               immigration = useImmigration,
+                              starts = starts,
                               K = K1)
         toc()
         qs::qsave(x = currMod, file = indMod)
@@ -331,9 +375,9 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
   wildlife_best_model_name <- modelSelected@Full[1,"model"]
   wildlife_best_model <- wildlife_Models@fits[[wildlife_best_model_name]]
   
-  ######
-  
-  ###### MODELS K #####
+  ###### END MODELS ################################################
+
+  ###### MODELS K ##################################################
   
   # We need to check if our K is enough. This is done my running the best model 
   # with various values of K until AIC remains unchanged
@@ -371,6 +415,7 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
       wildlife_bestModel <- list()
       wildlife_bestModel[[paste0("K_", Kvals)]] <- wildlife_best_model
       while (!AICmatches(previousAIC, currentAIC, tolerance)){
+        if (currentAIC == 450) browser()
         message(paste0("Current K is ", Kvals, ". Previous AIC was ", round(previousAIC, digits = 2),
                        ", while current AIC is ", round(currentAIC, digits = 2), ". With a tolerance ",
                        "of ", tolerance, " K is not yet stable. Trying K at ",
@@ -393,6 +438,7 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
                            mixture = modType,
                            dynamics = "trend", # We want the population trend through time
                            immigration = useImmigration,
+                           starts = starts,
                            K = Kvals)
         toc()
         qs::qsave(x =  wildlife_bestModel[[paste0("K_", Kvals)]], file = indMod)
@@ -438,9 +484,11 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
 
   # We then override the best model with the model with highest K --> most stable parameters
   wildlife_best_model <- wildlife_bestModel[[length(wildlife_bestModel)]]
-  ######
   
-  ###### PARAMETER ESTIMATION ######
+  ###### END MODELS K ##################################################
+  
+  ###### PARAMETER ESTIMATION ##########################################
+
   # Back-transformation of parameters using predict()
   initialPopulation <- predict(obj = wildlife_best_model, type = "lambda")
   populationGrowthRate <- predict(wildlife_best_model, type = "gamma")
@@ -450,7 +498,7 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
   } else immigration <- NA 
   
   pop <- unique(data.table(initialPop = predict(wildlife_best_model, type = "lambda")[,1], 
-                           cover = wildlife_best_model@data@siteCovs[, "cover"]))
+                           landscapeCover = wildlife_best_model@data@siteCovs[, "landscapeCover"]))
   
   # The observation radius for wildlife is 3m, so the area is 28.27m2 or 0,002827ha
   if (spShort %in% c("elaenia", "maskedBooby")){
@@ -460,7 +508,8 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
     # Observations for mabuia were done in 3D, trees, rocks, bushes, etc.
   }
   pop[, densityM := initialPop/areaM]
-  ######
+  
+  ###### END PARAMETER ESTIMATION ##########################################
   
   return(list(species = species,
               island = island,
@@ -477,7 +526,7 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
               initialPopulationDensity = pop,
               modelType = modType,
               numberOfSites = NROW(y),
-              cover = wildlife_best_model@data@siteCovs[, "cover"],
+              landscapeCover = wildlife_best_model@data@siteCovs[, "landscapeCover"],
               samplingOccasions = numPrimary,
               totalModelRuntime = sum(wildlife_models_K_time[2:length(wildlife_models_K_time)], 
                                           wildlife_models_time, na.rm = TRUE)))
