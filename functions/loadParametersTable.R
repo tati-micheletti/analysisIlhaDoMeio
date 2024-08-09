@@ -32,8 +32,8 @@ spParams <- function(islandShort, spShort, addImmigrationFor){
     if (spShort == "crab"){
       #### CRAB RATA ####
       lambda <- c("lam(.)", "lam(landscapeCover)")
-      gamma <- c("gamma(.)")#, "gamma(totalRainfallThreeMonths)")
-      p <- c("p(.)")#, "p(totalRainfallThreeMonths)", "p(moonPhase)","p(totalRainfallThreeMonths+moonPhase)")
+      gamma <- "gamma(.)"
+      p <- c("p(.)", "p(totalRainfallThreeMonths)", "p(moonPhase)","p(totalRainfallThreeMonths+moonPhase)")
       iota <- "iota(.)"
     }
     if (spShort == "maskedBooby"){
@@ -62,8 +62,8 @@ spParams <- function(islandShort, spShort, addImmigrationFor){
     if (spShort == "crab"){
       #### CRAB MEIO ####
       lambda <- c("lam(.)", "lam(landscapeCover)")
-      gamma <- c("gamma(.)"), "gamma(totalRainfallThreeMonths)", "gamma(TSE)", "gamma(totalRainfallThreeMonths+TSE)")
-      p <- c("p(.)"), "p(totalRainfallThreeMonths)", "p(moonPhase)","p(totalRainfallThreeMonths+moonPhase)")
+      gamma <- c("gamma(.)", "gamma(TSE)")
+      p <- c("p(.)", "p(totalRainfallThreeMonths)", "p(moonPhase)","p(totalRainfallThreeMonths+moonPhase)")
       iota <- "iota(.)"
     }
     if (spShort == "maskedBooby"){

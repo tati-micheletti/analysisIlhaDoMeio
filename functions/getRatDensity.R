@@ -84,7 +84,7 @@ getRatDensity <- function(plotSamplingAreas = FALSE){
   blackRatData <- data.table(species = rep("Rattus rattus", times = nCycles), 
                              island = rep("Ilha do Meio", times = nCycles),
                              cycle = cycles,
-                             variable = "populationDensity",
+                             parameter = "populationDensity",
                              estimate = c(densityAUG17["D", "estimate"], 
                                           densityOCT17["D", "estimate"],
                                           rep(0, times = 2)),

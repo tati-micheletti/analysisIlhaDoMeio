@@ -29,6 +29,8 @@ Require("unmarked")
 Require("secr")
 Require("tictoc")
 Require("qs")
+Require("ggplot2")
+Require("zeehio/facetscales@archived")
 # If any packages were installed here, restart your session and re-run the code!
 # Here we list all functions and then source all of them:
 allFls <- list.files(path = "./functions", full.names = TRUE)
@@ -58,14 +60,6 @@ Data <- loadData(dataLocation = file.path(wd, "finalDataCOUNTS.csv"))
 weatherData <- loadWeatherData(dataLocation = file.path(wd, "weatherNoronhaMar17Nov23.csv"))
 ```
 
-All model formulation's tested for all species are shown on Table X in the manuscript. 
-The best model for each species and island (i.e., Ilha Rata as Control, Ilha do Meio as Treatment) 
-was chosen based on Akaike Information Criterion (AIC) and the predictions for population growth rate 
-of Ilha do Meio for the best model were reduced by the predictions for population growth rate 
-of Ilha Rata. This ensured that drivers which could affect population growth in general in the region
-(i.e., extreme events, natural population variation cicles, among others) were eliminated. We then 
-plotted the results of all species (i.e., black rat density, and differential population growth rate
- of mabuias, crabs, elaenia and masked booby) in the same plot, Figure X.  
 
 ## Mabuia  
 
@@ -96,9 +90,11 @@ mabuiaMeio <- modelWildlife(DT = Data,
 
 ```
 
-After running the model, we built and saved a table showing  species, island, cycle (matching Table 
-XX), site, landCover, variable, estimate, standardError, lower confidence interval (LCI), upper 
-confidence interval (UCI), modelType, modelFormulation, AIC, K, totalModelRuntime.
+The best wildlife model for each species and island (i.e., Ilha Rata as Control, Ilha do Meio as Treatment) 
+was then chosen based on Akaike Information Criterion (AIC). From the chosen model, 
+a table was built showing species, island, cycle (matching Table XX), site, land cover type, parameter, 
+estimate, standard error, lower confidence interval (LCI), upper 
+confidence interval (UCI), model mixture, model formulation, AIC, K, and total model run time.
 
 ```{r mabuiaMeio2}
 mabuiaMeioDT <- calculatePopulationChange(species = "Trachylepis atlantica",
@@ -177,23 +173,25 @@ population growth and observation, apart from apart from TSE for Ilha do Meio. C
 zero inflated, so we tested both ZIP and NB models. Similarly to Mabuia, although 
 the NB model presented a smaller AIC, the dispersion parameter was not significant, 
 while the zero inflation was in the ZIP model. Therefore, we opted for a ZIP model. It is important 
-to notice that the models for this species did not converge throwing the error `Hessian is singular.`. 
-This generally happens when parameters are non-identifiable. 
+to notice that a four models for this species on Ilha do Meio did not converge throwing the error 
+`Hessian is singular.`. All of these models had landscape cover as a covariate for lambda and 
+TSE as covariate for gamma. This warning generally happens when parameters are non-identifiable and  
+can be usually resolved by either simplifying the model, or providing good starting values. 
+Even after trying to provide starting values for the models, however, these still did not converge. 
+This suggests the model formulation cannot capture the signal correctly and the estimates are likely 
+unreliable. These are, however, still reported in Table X with a footnote.
 
 ```{r crabMeio}
 crabMeio <- modelWildlife(DT = Data, island = "Ilha do Meio", 
                               species = "Johngarthia lagostoma",
                              weatherData = weatherData,
                              useImmigration = FALSE,
-                             useRobustDesign = FALSE,
-                          starts=c(4.307, 0.0963, -3.816, -2.47))
-# Get for 
-# ZIP:
-# NB:
-# P:
-# each one of the existing models... Ugh. Or... just check if the model of interest ("lam(landscapeCover)gamma(.)p(totalRainfallThreeMonths+moonPhase)iota(.)")
-# has different estimates than with the values. Maybe just implement for it?!
-# starts <- c(4.307,-0.413,1.317,0.0963,-3.816,0.733,-0.394,-2.47)
+                             useRobustDesign = FALSE)
+
+crabMeioDT <- calculatePopulationChange(species = "Johngarthia lagostoma",
+                                          island = "Ilha do Meio",
+                                          shortName = "Crab_Meio_",
+                                          RobustDesign = TRUE)
 ```
 
 After modelling crabs for the Ilha do Meio, we perform the same analysis for Ilha Rata:
@@ -204,6 +202,11 @@ crabRata <- modelWildlife(DT = Data, island = "Ilha Rata",
                              weatherData = weatherData,
                              useImmigration = FALSE,
                              useRobustDesign = FALSE)
+
+crabRataDT <- calculatePopulationChange(species = "Johngarthia lagostoma",
+                                          island = "Ilha Rata",
+                                          shortName = "Crab_Rata_",
+                                          RobustDesign = TRUE)
 ```
 
 ## Masked Booby
@@ -211,7 +214,9 @@ crabRata <- modelWildlife(DT = Data, island = "Ilha Rata",
 To perform the analysis for a seabird species, the Atoba Mascarado (masked booby; 
 *Sula dactylatra*), surveys were performed in all breeding sites across the Ilha 
 do Meio (n = 7), and on the only breeding site on Ilha Rata. We used adult counts 
-as a proxy for breeding site quality.  
+as a proxy for breeding site quality. As this species does not permanently stay on the island, we 
+included immigation and modelled it in function of TSE, in the same way for gamma for the Ilha do 
+Meio. The only model ran for Ilha Rata was the constant one.
 
 ```{r crabMeio}
 maskedBoobyMeio <- modelWildlife(DT = Data, island = "Ilha do Meio", 
@@ -219,6 +224,10 @@ maskedBoobyMeio <- modelWildlife(DT = Data, island = "Ilha do Meio",
                              weatherData = weatherData,
                              useImmigration = TRUE,
                              useRobustDesign = FALSE)
+maskedBoobyMeioDT <- calculatePopulationChange(species = "Sula dactylatra",
+                                          island = "Ilha do Meio",
+                                          shortName = "maskedBooby_Meio_",
+                                          RobustDesign = TRUE)
 ```
 
 After modelling crabs for the Ilha do Meio, we perform the same analysis for Ilha Rata:
@@ -229,24 +238,44 @@ maskedBoobyRata <- modelWildlife(DT = Data, island = "Ilha Rata",
                              weatherData = weatherData,
                              useImmigration = TRUE,
                              useRobustDesign = FALSE)
+maskedBoobyRataDT <- calculatePopulationChange(species = "Sula dactylatra",
+                                          island = "Ilha Rata",
+                                          shortName = "maskedBooby_Rata_",
+                                          RobustDesign = TRUE)
+
 ```
 
-### NEXT STEPS
+We then joined all species tables into one and calculate, for each species, the differential 
+population growth index to be plotted.
 
-Now that the models were constructed, we need to calculate the change in population 
-density through time for Ilha do Meio, and compare it to the control area (Ilha 
-Rata).
-
-```{r changeInPopulationDensity}
-changeInPopulation <- calculatePopulationChange(species = c("Trachylepis atlantica",
-                                                            "Elaenia ridleyana",
-                                                            "Johngarthia lagostoma",
-                                                            "Sula dactylatra"
-                                                            ), 
-                                                island = "Ilha do Meio", 
-                                                shortName = "Mabuia_Meio_", 
-                                                RobustDesign = FALSE)
+```{r popChangeTable}
+finalTableName <- file.path("outputs/finalTable.csv")
+if (!file.exists(finalTableName)){
+ finalTable <- rbindlist(list(
+   mabuiaMeioDT,
+   mabuiaRataDT,
+   elaeniaMeioDT,
+   elaeniaRataDT,
+   crabMeioDT,
+   crabRataDT,
+   maskedBoobyMeioDT,
+   maskedBoobyRataDT), use.names = TRUE)
+  write.csv(tb, finalTableName)
+} else {
+  finalTable <- data.table::fread(finalTableName)
+}
 ```
+
+For completeness, we also provide all model formulation's tested for all species and their parameter 
+estimates on Table X. 
+
+```{r allModelsTable}
+
+fullModTable <- createFullModelTable(finalTable = finalTable)
+
+```
+
+
 
 # Rat population modeling
 
@@ -264,13 +293,22 @@ blackRatData <- getRatDensity()
 ```
 
 We tested different model formulations (i.e., landscape covariates and also 
-different buffers; see previous commits to see code).  
-Model diagnostics (i.e., AIC) supported the use of the simplest model (i.e., 
-detection probability doesn't change), and the island shapefile as a mask. 
-Applying the mask or buffer of 200 didn't change the results, but other buffers 
+different buffers; see previous commits to see code). Model diagnostics (i.e., AIC) supported 
+the use of the simplest model (i.e., detection probability doesn't change), and the island 
+shapefile as a mask. Applying the mask or buffer of 200 didn't change the results, but other buffers 
 did.
 
 # Building final plot
+
+At last, we calculated the Differential Population Growth Index: This index represents the 
+difference in predicted population growth rates between Ilha do Meio and Ilha Rata for each 
+species. By subtracting the predictions for Ilha Rata from those of Ilha do Meio, the index 
+aims to isolate the specific factors influencing population growth on Ilha do Meio, independent of 
+regional drivers that could affect population growth uniformly across both islands. This adjustment 
+helps to eliminate the influence of broader regional factors like extreme events and natural 
+population variation cycles, allowing for a more focused analysis of the drivers specific to 
+Ilha do Meio. We then plotted the results of all species (i.e., black rat density, and Differential 
+Population Growth Index of mabuias, crabs, elaenia and masked booby) in the same plot, Figure X.  
 
 At last, we build a plot to show the difference in growth rate through time in function 
 of time since eradication (TSE) using the control to control for seasonality. We use growth 
@@ -280,10 +318,9 @@ Moreover, growth rate shows exactly what we sought with the current work, the po
 through time.
 
 ```{r plotPopGrowth}
-plotGrowth <- plotPopulationGrowth(wildlifeDataset = changeInPopulation, 
+plotGrowth <- plotPopulationGrowth(wildlifeDataset = finalTable, 
+                                   whatToPlot = "populationGrowthRate",
                                    ratsDataset = blackRatData)
 ```
 
-***ADD TO PAPER (TABLE) THAT POPULATION DENSITY IS BASED ON AVERAGE INITIAL POPULATION AND DO NOT 
-ACCOUNT FOR THE ORIGINAL UNCERTAINTY IN THIS PARAMETER, BUT ONLY ON THE UNCERTAINTY IN POP GROWTH RATE.
-MAYBE EXCLUDE THIS ALL TOGETHER. FEELING THIS MIGHT BE TRICKY.***
+

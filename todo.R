@@ -1,7 +1,8 @@
 # TODO
-# [ ] Run Elaenia for both islands
-# [ ] Evaluate the results
-# [ ] Run posthoc and make plots
+# [X] Run Elaenia for both islands
+# [X] Evaluate the results
+# [X] Run posthoc and make plots
+# [X] Cleanup Models -- needed to construct the full table
 # [ ] Write the results / discussion
 # [ ] Cleanup code
 # [ ] Publish code as release

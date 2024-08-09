@@ -17,7 +17,7 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
   paramTable <- loadParametersTable() 
   spParameters <- spParams(islandShort = islandShort, spShort = spShort, 
                            addImmigrationFor = imm)
-  
+
   message(paste0("Running models for ", spShort, 
                  " on ", islandShort, "..."))
   
@@ -230,13 +230,6 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
     t0 <- Sys.time()
     nullModsNames <- c("NB", "ZIP", "P")
     nullModels <- lapply(nullModsNames, function(nullModType){
-      print(paste0("Running ", nullModType," model"))
-      if (all(!is.null(starts),
-          nullModType == "P")){
-        startsN <- starts[1:(length(starts)-1)]
-      } else {
-        startsN <- starts
-      }
       nM <- pcountOpen(lambdaformula = ~1,  # Initial abundance
                        gammaformula = ~1,  # Formula for population growth rate
                        omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
@@ -246,7 +239,7 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
                        mixture = nullModType, # Negative binomial
                        dynamics = "trend", # We want the population trend through time
                        immigration = useImmigration,
-                       starts = startsN,
+                       # starts = starts,
                        K = K1)
       return(nM)
     })
@@ -323,17 +316,30 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
               rerunModels)){
         message(paste0("The model ", modName, " for ", spShort,
                        " for ", island, " doesn't exist. Running."))
-        currMod <- pcountOpen(lambdaformula = paramTable[variable == as.character(mods[Row, lambda]), value][[1]],  # Initial abundance
-                              gammaformula = paramTable[variable == as.character(mods[Row, gamma]), value][[1]],  # Population growth rate
-                              omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
-                              pformula = paramTable[variable == as.character(mods[Row, p]), value][[1]], # Probability of observation
-                              iotaformula = paramTable[variable == as.character(mods[Row, iota]), value][[1]], # Immigration
-                              data = wildlifeDF,
-                              mixture = modType,
-                              dynamics = "trend", # We want the population trend through time
-                              immigration = useImmigration,
-                              starts = starts,
-                              K = K1)
+        if (is.null(starts)){
+          currMod <- pcountOpen(lambdaformula = paramTable[variable == as.character(mods[Row, lambda]), value][[1]],  # Initial abundance
+                                gammaformula = paramTable[variable == as.character(mods[Row, gamma]), value][[1]],  # Population growth rate
+                                omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                                pformula = paramTable[variable == as.character(mods[Row, p]), value][[1]], # Probability of observation
+                                iotaformula = paramTable[variable == as.character(mods[Row, iota]), value][[1]], # Immigration
+                                data = wildlifeDF,
+                                mixture = modType,
+                                dynamics = "trend", # We want the population trend through time
+                                immigration = useImmigration,
+                                K = K1) 
+        } else {
+          currMod <- pcountOpen(lambdaformula = paramTable[variable == as.character(mods[Row, lambda]), value][[1]],  # Initial abundance
+                                gammaformula = paramTable[variable == as.character(mods[Row, gamma]), value][[1]],  # Population growth rate
+                                omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                                pformula = paramTable[variable == as.character(mods[Row, p]), value][[1]], # Probability of observation
+                                iotaformula = paramTable[variable == as.character(mods[Row, iota]), value][[1]], # Immigration
+                                data = wildlifeDF,
+                                mixture = modType,
+                                dynamics = "trend", # We want the population trend through time
+                                immigration = useImmigration,
+                                starts = starts,
+                                K = K1)
+        }
         toc()
         qs::qsave(x = currMod, file = indMod)
       } else {
@@ -344,7 +350,6 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
       return(currMod)
     })
     names(allMods) <- mods[["models"]]
-    
     wildlife_Models <- fitList(fits = allMods)
     
     wildlife_models_time <- numeric(length(wildlife_Models@fits))
@@ -374,7 +379,7 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
   modelSelected <- modSel(wildlife_Models)
   wildlife_best_model_name <- modelSelected@Full[1,"model"]
   wildlife_best_model <- wildlife_Models@fits[[wildlife_best_model_name]]
-  
+
   ###### END MODELS ################################################
 
   ###### MODELS K ##################################################
@@ -415,7 +420,6 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
       wildlife_bestModel <- list()
       wildlife_bestModel[[paste0("K_", Kvals)]] <- wildlife_best_model
       while (!AICmatches(previousAIC, currentAIC, tolerance)){
-        if (currentAIC == 450) browser()
         message(paste0("Current K is ", Kvals, ". Previous AIC was ", round(previousAIC, digits = 2),
                        ", while current AIC is ", round(currentAIC, digits = 2), ". With a tolerance ",
                        "of ", tolerance, " K is not yet stable. Trying K at ",
