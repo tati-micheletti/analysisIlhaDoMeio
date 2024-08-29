@@ -12,7 +12,10 @@ loadParametersTable <- function(){
   return(paramTab)
 }
 
-spParams <- function(islandShort, spShort, addImmigrationFor){
+spParams <- function(islandShort, 
+                     spShort 
+                     # addImmigrationFor = NULL
+){
   if (islandShort == "Rata"){
     ########################## RATA
     if (spShort == "elaenia"){
@@ -39,7 +42,7 @@ spParams <- function(islandShort, spShort, addImmigrationFor){
     if (spShort == "maskedBooby"){
       #### BOOBIES RATA ####
       lambda <- "lam(.)"
-      gamma <- "gamma(.)"
+      gamma <- c("gamma(.)")
       p <- "p(.)"
       iota <- c("iota(.)")
     }
@@ -72,9 +75,9 @@ spParams <- function(islandShort, spShort, addImmigrationFor){
       gamma <- c("gamma(.)", "gamma(TSE)")
       p <- "p(.)"
       iota <- c("iota(.)")
-      if (spShort %in% addImmigrationFor){
-        iota <- c(iota, "iota(TSE)") 
-      }
+      # if (spShort %in% addImmigrationFor){
+      #   iota <- c(iota, "iota(TSE)")
+      # }
     }
   }
   return(list(lambda = lambda,

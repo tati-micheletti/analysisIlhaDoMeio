@@ -56,8 +56,8 @@ could be used for all species, as it also allows for different distributions
 (i.e., Poisson, Negative Binomial and Zero Inflated). 
 
 ```{r loadAndCheckData}
-Data <- loadData(dataLocation = file.path(wd, "finalDataCOUNTS.csv"))
-weatherData <- loadWeatherData(dataLocation = file.path(wd, "weatherNoronhaMar17Nov23.csv"))
+Data <- loadData(dataLocation = file.path(wd, "countData.csv"))
+weatherData <- loadWeatherData(dataLocation = file.path(wd, "weatherData.csv"))
 ```
 
 
@@ -84,9 +84,7 @@ more space due to verticalization) than on open areas.
 mabuiaMeio <- modelWildlife(DT = Data, 
                             island = "Ilha do Meio",
                             species = "Trachylepis atlantica",
-                            weatherData = weatherData, 
-                            useImmigration = FALSE, 
-                            useRobustDesign = FALSE)
+                            weatherData = weatherData)
 
 ```
 
@@ -99,8 +97,7 @@ confidence interval (UCI), model mixture, model formulation, AIC, K, and total m
 ```{r mabuiaMeio2}
 mabuiaMeioDT <- calculatePopulationChange(species = "Trachylepis atlantica",
                                           island = "Ilha do Meio",
-                                          shortName = "Mabuia_Meio_",
-                                          RobustDesign = FALSE)
+                                          shortName = "Mabuia_Meio_")
 ```
 
 We then did the same for the mabuia on Ilha Rata:    
@@ -108,14 +105,11 @@ We then did the same for the mabuia on Ilha Rata:
 ```{r mabuiaRata}
 mabuiaRata <- modelWildlife(DT = Data, island = "Ilha Rata",
                             species = "Trachylepis atlantica",
-                            weatherData = weatherData,
-                            useImmigration = FALSE, 
-                            useRobustDesign = FALSE)
+                            weatherData = weatherData)
 
 mabuiaRataDT <- calculatePopulationChange(species = "Trachylepis atlantica",
                                           island = "Ilha Rata",
-                                          shortName = "Mabuia_Rata_",
-                                          RobustDesign = FALSE)
+                                          shortName = "Mabuia_Rata_")
 ```
 
 ## Elenia  
@@ -137,7 +131,6 @@ cover nor observerID were added as covariates. First we ran the models for Ilha 
 elaeniaMeio <- modelWildlife(DT = Data, island = "Ilha do Meio",
                              species = "Elaenia ridleyana",
                              weatherData = weatherData,
-                             useImmigration = FALSE,
                              useRobustDesign = TRUE)
 
 elaeniaMeioDT <- calculatePopulationChange(species = "Elaenia ridleyana",
@@ -152,7 +145,6 @@ And then for Ilha Rata:
 elaeniaRata <- modelWildlife(DT = Data, island = "Ilha Rata",
                              species = "Elaenia ridleyana",
                              weatherData = weatherData,
-                             useImmigration = FALSE,
                              useRobustDesign = TRUE)
 
 elaeniaRataDT <- calculatePopulationChange(species = "Elaenia ridleyana",
@@ -184,14 +176,11 @@ unreliable. These are, however, still reported in Table X with a footnote.
 ```{r crabMeio}
 crabMeio <- modelWildlife(DT = Data, island = "Ilha do Meio", 
                               species = "Johngarthia lagostoma",
-                             weatherData = weatherData,
-                             useImmigration = FALSE,
-                             useRobustDesign = FALSE)
+                             weatherData = weatherData)
 
 crabMeioDT <- calculatePopulationChange(species = "Johngarthia lagostoma",
                                           island = "Ilha do Meio",
-                                          shortName = "Crab_Meio_",
-                                          RobustDesign = TRUE)
+                                          shortName = "Crab_Meio_")
 ```
 
 After modelling crabs for the Ilha do Meio, we perform the same analysis for Ilha Rata:
@@ -199,14 +188,11 @@ After modelling crabs for the Ilha do Meio, we perform the same analysis for Ilh
 ```{r crabRata}
 crabRata <- modelWildlife(DT = Data, island = "Ilha Rata", 
                               species = "Johngarthia lagostoma",
-                             weatherData = weatherData,
-                             useImmigration = FALSE,
-                             useRobustDesign = FALSE)
+                             weatherData = weatherData)
 
 crabRataDT <- calculatePopulationChange(species = "Johngarthia lagostoma",
                                           island = "Ilha Rata",
-                                          shortName = "Crab_Rata_",
-                                          RobustDesign = TRUE)
+                                          shortName = "Crab_Rata_")
 ```
 
 ## Masked Booby
@@ -219,29 +205,23 @@ included immigation and modelled it in function of TSE, in the same way for gamm
 Meio. The only model ran for Ilha Rata was the constant one.
 
 ```{r crabMeio}
-maskedBoobyMeio <- modelWildlife(DT = Data, island = "Ilha do Meio", 
-                                     species = "Sula dactylatra",
-                             weatherData = weatherData,
-                             useImmigration = TRUE,
-                             useRobustDesign = FALSE)
+maskedBoobyMeio <- modelWildlife(DT = Data, island = "Ilha do Meio",
+                                 species = "Sula dactylatra",
+                                 weatherData = weatherData)
 maskedBoobyMeioDT <- calculatePopulationChange(species = "Sula dactylatra",
                                           island = "Ilha do Meio",
-                                          shortName = "maskedBooby_Meio_",
-                                          RobustDesign = TRUE)
+                                          shortName = "maskedBooby_Meio_")
 ```
 
 After modelling crabs for the Ilha do Meio, we perform the same analysis for Ilha Rata:
 
 ```{r crabRata}
-maskedBoobyRata <- modelWildlife(DT = Data, island = "Ilha Rata", 
-                                     species = "Sula dactylatra",
-                             weatherData = weatherData,
-                             useImmigration = TRUE,
-                             useRobustDesign = FALSE)
+maskedBoobyRata <- modelWildlife(DT = Data, island = "Ilha Rata",
+                                 species = "Sula dactylatra",
+                                 weatherData = weatherData)
 maskedBoobyRataDT <- calculatePopulationChange(species = "Sula dactylatra",
                                           island = "Ilha Rata",
-                                          shortName = "maskedBooby_Rata_",
-                                          RobustDesign = TRUE)
+                                          shortName = "maskedBooby_Rata_")
 
 ```
 
@@ -267,7 +247,7 @@ if (!file.exists(finalTableName)){
 ```
 
 For completeness, we also provide all model formulation's tested for all species and their parameter 
-estimates on Table X. 
+estimates on Appendix . 
 
 ```{r allModelsTable}
 
@@ -275,7 +255,13 @@ fullModTable <- createFullModelTable(finalTable = finalTable)
 
 ```
 
+For the manuscript, a table with the best models has also been created:
 
+```{r bestModTable}
+
+bestModelsTable <- getBestModelsTable()
+
+```
 
 # Rat population modeling
 
