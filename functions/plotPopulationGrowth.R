@@ -68,7 +68,14 @@ plotPopulationGrowth <- function(wildlifeDataset, ratsDataset,
   )
   plotCols <- c("darkgreen", "blue", "red", "orange", "purple")
   plotCols2 <- rep("black", times = 5)
-  # browser()
+
+  linearModels <- lapply(unique(finalDT[["species"]]), function(sp){
+    subDT <- finalDT[species == sp, ]
+    md <- lm(estimate ~ cycle, data = subDT)
+    return(md)
+  })
+  names(linearModels) <- unique(finalDT[["species"]])
+  
   p <- ggplot(finalDT, aes(x = cycle, y = estimate, group = species)) + #, linetype = species
       geom_point() + #aes(shape = species)
       geom_smooth(method = "lm",  fullrange = TRUE, se = F, aes(color = species)) +
@@ -88,4 +95,8 @@ plotPopulationGrowth <- function(wildlifeDataset, ratsDataset,
   nm <- file.path("outputs/Figure4.png")
   ggsave(device = "png", filename = nm, 
          width = 6, height = 10)
+  finalOBJ <- list(linearModelObject = linearModels,
+                   finalPlot = p)
+  qs::qsave(finalOBJ, file = "outputs/linearModelsAndPlot.qs")
+  return(finalOBJ)
 }
