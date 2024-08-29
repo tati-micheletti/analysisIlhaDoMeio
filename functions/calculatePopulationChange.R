@@ -1,7 +1,7 @@
 calculatePopulationChange <- function(species, island,
                                       envir = environment(),
                                       rewriteTable = FALSE,
-                                      RobustDesign,
+                                      RobustDesign = FALSE,
                                       shortName, 
                                       Data # Data here is to calculate which cycle the results belong to
                                       ){
@@ -9,9 +9,8 @@ calculatePopulationChange <- function(species, island,
           length(island)>1,
           length(shortName)>1)) stop("Please provide only one species and one island")
   outputsTable <- file.path("outputs", paste0("outputsTable_",shortName,".csv"))
-  # if (any(!file.exists(outputsTable),
-  #         rewriteTable)) {  
-  if (TRUE) {   
+  if (any(!file.exists(outputsTable),
+          rewriteTable)) {
   listSpecies <- rbindlist(lapply(species, function(sp){
       listIsland <- rbindlist(lapply(island, function(isla){
         spShort <- unlist(sapply(sp, switch,
@@ -40,7 +39,7 @@ calculatePopulationChange <- function(species, island,
         resIsla <- get(paste0(spShort, islandShort), envir = envir)
         listParam <- rbindlist(lapply(c("populationGrowthRate", 
                                         "detectionProbability",
-                                        "immigration",
+                                        # "immigration",
                                         "initialPopulationDensity"), function(param){
                                           message(paste0("Creating data for ", param, " for ", spShort, " for ", isla))
                                           tr <- resIsla$samplingOccasions*resIsla$numberOfSites
@@ -70,21 +69,21 @@ calculatePopulationChange <- function(species, island,
                                             UCI <- as.numeric(matrix(resIsla$detectionProbability[,"upper"], nrow = resIsla$numberOfSites, byrow = TRUE))
                                           }
                                           # IMMIGRATION
-                                          if (param == "immigration"){
-                                            if (length(resIsla$immigration) == 1){
-                                              if (!is.na(resIsla$immigration)) stop("Length immigration is 1 but not NA. Debug.")
-                                              estimate <- SE <- UCI <- LCI <- rep(NA, times = tr)
-                                            } else {
-                                              imm <- transpose(resIsla$immigration[1:as.numeric(resIsla$samplingOccasions-1),])
-                                              imm <- cbind(rep(NA, NROW(imm)), imm)
-                                              colnames(imm) <- c(paste0("Cycle_", 1:resIsla$samplingOccasions))
-                                              rownames(imm) <- c("Predicted", "SE", "lower", "upper")
-                                              estimate <- rep(as.numeric(imm["Predicted",]), each = resIsla$numberOfSites)
-                                              SE <- rep(as.numeric(imm["SE",]), each = resIsla$numberOfSites)
-                                              LCI <- rep(as.numeric(imm["lower",]), each = resIsla$numberOfSites)
-                                              UCI <- rep(as.numeric(imm["upper",]), each = resIsla$numberOfSites)
-                                            } 
-                                          }
+                                          # if (param == "immigration"){
+                                          #   if (length(resIsla$immigration) == 1){
+                                          #     if (!is.na(resIsla$immigration)) stop("Length immigration is 1 but not NA. Debug.")
+                                          #     estimate <- SE <- UCI <- LCI <- rep(NA, times = tr)
+                                          #   } else {
+                                          #     imm <- transpose(resIsla$immigration[1:as.numeric(resIsla$samplingOccasions-1),])
+                                          #     imm <- cbind(rep(NA, NROW(imm)), imm)
+                                          #     colnames(imm) <- c(paste0("Cycle_", 1:resIsla$samplingOccasions))
+                                          #     rownames(imm) <- c("Predicted", "SE", "lower", "upper")
+                                          #     estimate <- rep(as.numeric(imm["Predicted",]), each = resIsla$numberOfSites)
+                                          #     SE <- rep(as.numeric(imm["SE",]), each = resIsla$numberOfSites)
+                                          #     LCI <- rep(as.numeric(imm["lower",]), each = resIsla$numberOfSites)
+                                          #     UCI <- rep(as.numeric(imm["upper",]), each = resIsla$numberOfSites)
+                                          #   } 
+                                          # }
                                           # AVERAGE DENSITY
                                           landscapeCover <- as.character(resIsla$landscapeCover)
                                           Order <- 1:resIsla$numberOfSites
@@ -138,8 +137,9 @@ calculatePopulationChange <- function(species, island,
                                                             modelMixture = rep(resIsla$modelMixture, times = tr),
                                                             modelFormulation = rep(resIsla$bestModelName, times = tr),
                                                             AIC = rep(round(resIsla$bestModel@AIC, 2), times = tr),
-                                                            K = rep(resIsla$bestModel@K, times = tr),
-                                                            totalModelRuntime = rep(resIsla$totalModelRuntime, times = tr)
+                                                            K = rep(resIsla$bestModel@K, times = tr)
+                                                            #totalModelRuntime = rep(resIsla$totalModelRuntime, times = tr) # Not worth adding. 
+                                                            # At least one has been run separately, so the timing is not representative.
                                           )
                                           return(res)
                                           

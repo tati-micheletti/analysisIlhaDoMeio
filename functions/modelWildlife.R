@@ -1,8 +1,10 @@
 ############################### WILDLIFE MODELS ###############################
 modelWildlife <- function(DT, island, species, rerunModels = FALSE, 
                               reRunK = FALSE, plotting = FALSE,
-                          weatherData, useImmigration,
-                          useRobustDesign, starts = NULL){
+                          weatherData, 
+                          # useImmigration = FALSE,
+                          useRobustDesign = FALSE, starts = NULL,
+                          tryGetStarts = TRUE){
   
   ###### GENERAL SETUP ########################################################
   
@@ -13,10 +15,9 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
                     if (species == "Sula dactylatra") "maskedBooby" else
                     stop(paste0("Species ", species, " is not in the dataset"))
 
-  imm <- if (useImmigration) spShort else NULL
+  # imm <- if (useImmigration) spShort else NULL
   paramTable <- loadParametersTable() 
-  spParameters <- spParams(islandShort = islandShort, spShort = spShort, 
-                           addImmigrationFor = imm)
+  spParameters <- spParams(islandShort = islandShort, spShort = spShort)
 
   message(paste0("Running models for ", spShort, 
                  " on ", islandShort, "..."))
@@ -24,9 +25,11 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
   toleranceSp <- getTolerance(sp = spShort,
                               isld = islandShort)
  
-  addOns <- if (all(useImmigration, useRobustDesign)) "Immig_RbstDsgn" else 
-    if (all(useRobustDesign, !useImmigration)) "RbstDsgn" else 
-      if (all(!useRobustDesign, useImmigration)) "Immig" else NULL
+  # addOns <- if (all(useImmigration, useRobustDesign)) "Immig_RbstDsgn" else 
+  #   if (all(useRobustDesign, !useImmigration)) "RbstDsgn" else 
+  #     if (all(!useRobustDesign, useImmigration)) "Immig" else NULL
+  addOns <- if (useRobustDesign) "RbstDsgn" else NULL
+  
   individualModels <- paste("individualModels", addOns, sep = "_")
   
   ###### END GENERAL SETUP ########################################################
@@ -238,8 +241,7 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
                        data = wildlifeDF,
                        mixture = nullModType, # Negative binomial
                        dynamics = "trend", # We want the population trend through time
-                       immigration = useImmigration,
-                       # starts = starts,
+                       # immigration = useImmigration,
                        K = K1)
       return(nM)
     })
@@ -269,7 +271,7 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
           stop(paste0("NB = ", pNB, "; ZIP1 = ", pZI1, 
                       "; ZIP2 = ", pZI2, 
                       ". Something seems wrong. Debug."))
-
+# stop(paste0("Model mixture chosen: ", modType))
   nullModChosen <- nullModels[[modType]]
   hasNoEstimates <- coef(nullModChosen)["gamTrend(Int)"] == 0
   if (hasNoEstimates){
@@ -279,10 +281,10 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
   }
     message(paste0("Type of model for ", spShort, " for ", island, 
                    " was determined as ", modType))
-    if (all(!is.null(starts),
-      modType == "P")){
-      starts <- starts[1:(length(starts)-1)]
-    }
+    # if (all(!is.null(starts), # WAS TRYING FOR CRAB, SHOULD BE DELETED
+    #   modType == "P")){
+    #   starts <- starts[1:(length(starts)-1)]
+    # }
   
   ###### END NULL MODELS #######################################
   
@@ -325,7 +327,7 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
                                 data = wildlifeDF,
                                 mixture = modType,
                                 dynamics = "trend", # We want the population trend through time
-                                immigration = useImmigration,
+                                # immigration = useImmigration,
                                 K = K1) 
         } else {
           currMod <- pcountOpen(lambdaformula = paramTable[variable == as.character(mods[Row, lambda]), value][[1]],  # Initial abundance
@@ -336,7 +338,7 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
                                 data = wildlifeDF,
                                 mixture = modType,
                                 dynamics = "trend", # We want the population trend through time
-                                immigration = useImmigration,
+                                # immigration = useImmigration,
                                 starts = starts,
                                 K = K1)
         }
@@ -351,7 +353,6 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
     })
     names(allMods) <- mods[["models"]]
     wildlife_Models <- fitList(fits = allMods)
-    
     wildlife_models_time <- numeric(length(wildlife_Models@fits))
     for (m in 0:(length(wildlife_models_time)-1)){
       otm <- get(paste0("t", m+1))-get(paste0("t", m))
@@ -388,8 +389,8 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
   # with various values of K until AIC remains unchanged
   wildlife_best <- file.path(reproducible::checkPath(file.path("./outputs", individualModels), 
                                                      create = TRUE), paste0(spShort,"_",islandShort,"_bestModel.qs"))
-  wildlife_models_K_t <- file.path(reproducible::checkPath(file.path("./outputs", individualModels), 
-                                                           create = TRUE), paste0(spShort,"_",islandShort,"_models_K_time.qs"))
+  # wildlife_models_K_t <- file.path(reproducible::checkPath(file.path("./outputs", individualModels), 
+  #                                                          create = TRUE), paste0(spShort,"_",islandShort,"_models_K_time.qs"))
   # I need to chose K iteratively. The first K needs to be the one that is 
   # max observation + 1. Then, we can progress
   if (any(reRunK,
@@ -405,7 +406,8 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
     bestLambda <- as.character(mods[models == wildlife_best_model_name, lambda])
     bestGamma <- as.character(mods[models == wildlife_best_model_name, gamma])
     bestP <- as.character(mods[models == wildlife_best_model_name, p])
-    bestIota <- if (useImmigration) as.character(mods[models == wildlife_best_model_name, iota]) else "iota(.)"
+    # bestIota <- if (useImmigration) as.character(mods[models == wildlife_best_model_name, iota]) else "iota(.)"
+    bestIota <- "iota(.)"
     bestModIndex <- which(names(wildlife_Models@fits) == wildlife_best_model_name)
     t0 <- wildlife_models_time[bestModIndex] # Time it took the best model for first K
     t1 <- Sys.time()
@@ -433,19 +435,42 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
                             paste0(spShort, "_", islandShort, "_K", Kvals,".qs"))
         if (any(!file.exists(indMod),
                 reRunK, rerunModels)){
-          wildlife_bestModel[[paste0("K_", Kvals)]] <- pcountOpen(lambdaformula = paramTable[variable == bestLambda, value][[1]],  # Initial abundance
-                           gammaformula = paramTable[variable == bestGamma, value][[1]],  # Formula for population growth rate
-                           omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
-                           pformula = paramTable[variable == bestP, value][[1]],
-                           iotaformula = paramTable[variable == bestIota, value][[1]],
-                           data = wildlifeDF,
-                           mixture = modType,
-                           dynamics = "trend", # We want the population trend through time
-                           immigration = useImmigration,
-                           starts = starts,
-                           K = Kvals)
+          
+          if (all(is.null(starts), !tryGetStarts)){
+            wildlife_bestModel[[paste0("K_", Kvals)]] <- pcountOpen(lambdaformula = paramTable[variable == bestLambda, value][[1]],  # Initial abundance
+                                                                    gammaformula = paramTable[variable == bestGamma, value][[1]],  # Formula for population growth rate
+                                                                    omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                                                                    pformula = paramTable[variable == bestP, value][[1]],
+                                                                    iotaformula = paramTable[variable == bestIota, value][[1]],
+                                                                    data = wildlifeDF,
+                                                                    mixture = modType,
+                                                                    dynamics = "trend", # We want the population trend through time
+                                                                    # immigration = useImmigration,
+                                                                    K = Kvals)
+          } else {
+            if (any(is.null(starts), tryGetStarts)){
+              modEstiObj <- summary(wildlife_bestModel[[length(wildlife_bestModel)]]@estimates)
+              estVal <- NULL
+              for (est in 1:length(modEstiObj)){
+                estVal <- c(estVal, modEstiObj[[est]][["Estimate"]])
+              }
+              starts <- estVal
+            }
+            wildlife_bestModel[[paste0("K_", Kvals)]] <- pcountOpen(lambdaformula = paramTable[variable == bestLambda, value][[1]],  # Initial abundance
+                                                                    gammaformula = paramTable[variable == bestGamma, value][[1]],  # Formula for population growth rate
+                                                                    omegaformula = ~1, # Formula for apparent survival probability: can't use covs here
+                                                                    pformula = paramTable[variable == bestP, value][[1]],
+                                                                    iotaformula = paramTable[variable == bestIota, value][[1]],
+                                                                    data = wildlifeDF,
+                                                                    mixture = modType,
+                                                                    dynamics = "trend", # We want the population trend through time
+                                                                    # immigration = useImmigration,
+                                                                    starts = starts,
+                                                                    K = Kvals)
+          }
         toc()
         qs::qsave(x =  wildlife_bestModel[[paste0("K_", Kvals)]], file = indMod)
+
         } else {
           message(paste0("The model with K ", Kvals, " for ", spShort,
                          " for ", island," already exists. Returning."))
@@ -460,34 +485,36 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
                      round(previousAIC, digits = 2), ", while current AIC is ", 
                      round(currentAIC, digits = 2), "."))
     qs::qsave(x = wildlife_bestModel, file = wildlife_best)
-    wildlife_models_K_time <- numeric(length(wildlife_bestModel))
-    for (m in 2:length(wildlife_bestModel)){
-      otm <- get(paste0("t", m))-get(paste0("t", m-1))
-      tm <- as.numeric(otm)
-      wildlife_models_K_time[m] <- if (units(otm)=="secs")
-        tm/60 else # Seconds
-          if (units(otm)=="mins")
-            tm else # Minutes
-              tm*60 # Hours
-    }
-    wildlife_models_K_time[1] <- t0
-    qs::qsave(x = wildlife_models_K_time, file = wildlife_models_K_t)
+    # wildlife_models_K_time <- numeric(length(wildlife_bestModel))  # Removed. See comment below
+    # for (m in 2:length(wildlife_bestModel)){
+    #   otm <- get(paste0("t", m))-get(paste0("t", m-1))
+    #   tm <- as.numeric(otm)
+    #   wildlife_models_K_time[m] <- if (units(otm)=="secs")
+    #     tm/60 else # Seconds
+    #       if (units(otm)=="mins")
+    #         tm else # Minutes
+    #           tm*60 # Hours
+    # }
+    # wildlife_models_K_time[1] <- t0
+    # qs::qsave(x = wildlife_models_K_time, file = wildlife_models_K_t)
   } else {
     message(paste0("Models for assessing K for ", spShort," on ", island,
                    " are available. Loading results..."))
     wildlife_bestModel <- qs::qread(file = wildlife_best)
-    wildlife_models_K_time <- qs::qread(file = wildlife_models_K_t)
+    # wildlife_models_K_time <- qs::qread(file = wildlife_models_K_t) # Removed. See comment below
   }
-  wildlife_AICs <- sapply(wildlife_bestModel, function(m) m@AIC)
-  
-  # Plot AIC to see if the K is ok
-  if (plotting){
-    p <- plot(x = valuesK, y = wildlife_AICs, xlab = "K values", ylab = "AIC", 
-              title = paste0(spShort, " models on ", island))
-  } else p <- NA
-
-  # We then override the best model with the model with highest K --> most stable parameters
-  wildlife_best_model <- wildlife_bestModel[[length(wildlife_bestModel)]]
+  if (is(wildlife_bestModel, "list")){
+    wildlife_AICs <- sapply(wildlife_bestModel, function(m) m@AIC)
+    
+    # Plot AIC to see if the K is ok
+    if (plotting){
+      p <- plot(x = valuesK, y = wildlife_AICs, xlab = "K values", ylab = "AIC", 
+                title = paste0(spShort, " models on ", island))
+    } else p <- NA
+    p <- NA
+    # We then override the best model with the model with highest K --> most stable parameters
+    wildlife_best_model <- wildlife_bestModel[[length(wildlife_bestModel)]]
+  }
   
   ###### END MODELS K ##################################################
   
@@ -497,9 +524,9 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
   initialPopulation <- predict(obj = wildlife_best_model, type = "lambda")
   populationGrowthRate <- predict(wildlife_best_model, type = "gamma")
   detection <- predict(wildlife_best_model, type = "det")
-  if (useImmigration){
-    immigration <- predict(wildlife_best_model, type = "iota")
-  } else immigration <- NA 
+  # if (useImmigration){
+  #   immigration <- predict(wildlife_best_model, type = "iota")
+  # } else immigration <- NA 
   
   pop <- unique(data.table(initialPop = predict(wildlife_best_model, type = "lambda")[,1], 
                            landscapeCover = wildlife_best_model@data@siteCovs[, "landscapeCover"]))
@@ -522,17 +549,19 @@ modelWildlife <- function(DT, island, species, rerunModels = FALSE,
               bestModelName = wildlife_best_model_name,
               bestModel = wildlife_best_model,
               allKmodels = wildlife_bestModel,
-              Kplot = p,
+              # Kplot = p,
               initialPopulation = initialPopulation,
               detectionProbability = detection,
               populationGrowthRate = populationGrowthRate,
-              immigration = immigration,
+              # immigration = immigration,
               initialPopulationDensity = pop,
               modelType = modType,
               numberOfSites = NROW(y),
               landscapeCover = wildlife_best_model@data@siteCovs[, "landscapeCover"],
-              samplingOccasions = numPrimary,
-              totalModelRuntime = sum(wildlife_models_K_time[2:length(wildlife_models_K_time)], 
-                                          wildlife_models_time, na.rm = TRUE)))
+              samplingOccasions = numPrimary
+              # totalModelRuntime = sum(wildlife_models_K_time[2:length(wildlife_models_K_time)], 
+                                          # wildlife_models_time, na.rm = TRUE) #, Not worth adding. 
+              # At least one has been run separately, so the timing is not representative.
+              ))
 }
 #################################

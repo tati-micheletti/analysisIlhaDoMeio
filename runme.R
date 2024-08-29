@@ -23,8 +23,8 @@ for (fl in allFls){
   message(paste0("Sourcing the function ", basename(fl))) 
   source(file = fl) 
 }
-Data <- loadData(dataLocation = "data/finalDataCOUNTS.csv")
-weatherData <- loadWeatherData(dataLocation = file.path(wd, "weatherNoronhaMar17Nov23.csv"))
+Data <- loadData(dataLocation = "data/countData.csv")
+weatherData <- loadWeatherData(dataLocation = file.path(wd, "weatherData.csv"))
 
 fullComb <- data.table(expand.grid(Species = c("Trachylepis atlantica",
                                                "Elaenia ridleyana",
@@ -46,15 +46,15 @@ fullComb[, rbstDsgn := c(rep(FALSE, times = 1),
                          rep(TRUE, times = 1),
                          rep(FALSE, times = 2)
 )]
-fullComb[, immgrt := c(rep(FALSE, times = 3),
-                       rep(TRUE, times = 1),
-                       rep(FALSE, times = 3),
-                       rep(TRUE, times = 1)
-)]
+# fullComb[, immgrt := c(rep(FALSE, times = 8),
+#                        rep(TRUE, times = 1),
+#                        rep(FALSE, times = 3),
+#                        rep(TRUE, times = 1)
+# )]
 
 finalTableName <- file.path("outputs/finalTable.csv")
 
-runParallel <- TRUE
+runParallel <- FALSE
 
 
 if (!file.exists(finalTableName)){

@@ -26,11 +26,7 @@ if (any(!file.exists(fullTableName),
                            rep(TRUE, times = 1),
                            rep(FALSE, times = 2)
   )]
-  fullComb[, immgrt := c(rep(FALSE, times = 3),
-                         rep(TRUE, times = 1),
-                         rep(FALSE, times = 3),
-                         rep(TRUE, times = 1)
-  )]
+  # fullComb[, immgrt := rep(FALSE, times = 8)]
   
   paramTable <- loadParametersTable() 
   
@@ -39,9 +35,9 @@ if (any(!file.exists(fullTableName),
     Species <- as.character(fullComb[ROW, Species])
     Island <- as.character(fullComb[ROW, Island])
     useRbd <- fullComb[ROW, rbstDsgn]
-    useImm <- fullComb[ROW, immgrt]
+    # useImm <- fullComb[ROW, immgrt]
     Rbd <- if (useRbd) "RbstDsgn" else ""
-    Imm <- if (useImm) "Immig" else ""
+    # Imm <- if (useImm) "Immig" else ""
     
     islandShort <-  if (Island == "Ilha Rata") "Rata" else "Meio"
     spShort <-  if (Species == "Elaenia ridleyana") "elaenia" else 
@@ -50,11 +46,12 @@ if (any(!file.exists(fullTableName),
           if (Species == "Sula dactylatra") "maskedBooby" else
             stop(paste0("Species ", Species, " is not in the dataset"))
     
-    imm <- if (useImm) spShort else NULL
+    # imm <- if (useImm) spShort else NULL
     
     spParameters <- spParams(islandShort = islandShort, 
-                             spShort = spShort, 
-                             addImmigrationFor = imm)
+                             spShort = spShort 
+                             # addImmigrationFor = imm
+                             )
     
     mods <- data.table(expand.grid(lambda = spParameters$lambda, 
                                    gamma = spParameters$gamma, 
@@ -65,10 +62,8 @@ if (any(!file.exists(fullTableName),
     mods[, Species := spShort]
     mods[, Island := islandShort]
     
-    addOns <- if (all(useImm, useRbd)) "Immig_RbstDsgn" else 
-      if (all(useRbd, !useImm)) "RbstDsgn" else 
-        if (all(!useRbd, useImm)) "Immig" else NULL
-    
+    addOns <- if (useRbd) "RbstDsgn" else NULL
+
     individualModels <- paste("individualModels", addOns, sep = "_")
     
     mods[, modelFileName := file.path("./outputs", individualModels,
@@ -88,7 +83,8 @@ if (any(!file.exists(fullTableName),
       modLoaded <- qs::qread(modToLoad)
       if (isBestModel){
         # Need to get only the last one
-        modLoaded <- modLoaded[[length(modLoaded)]]
+        if (is(modLoaded, "list"))
+          modLoaded <- modLoaded[[length(modLoaded)]]
       }
       mdSumm <- suppressMessages(invisible(summary(modLoaded)))
       allPars <- names(mdSumm)
@@ -119,8 +115,8 @@ if (any(!file.exists(fullTableName),
                          p = pars[["p"]],
                          AIC = modLoaded@AIC,
                          modelMixture = modLoaded@mixture,
-                         K = modLoaded@K,
-                         immigration = modLoaded@immigration
+                         K = modLoaded@K
+                         # immigration = modLoaded@immigration
       )
       return(tbDT)
     }))

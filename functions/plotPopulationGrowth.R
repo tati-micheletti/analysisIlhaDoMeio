@@ -54,11 +54,11 @@ plotPopulationGrowth <- function(wildlifeDataset, ratsDataset,
   finalDT[species == "Sula dactylatra", species := "S. dactylatra"]
   finalDT[species == "Trachylepis atlantica", species := "T. atlantica"]
   finalDT[species == "Rattus rattus", species := "R. rattus"]
-  finalDT[, species := factor(species, levels = c("S. dactylatra",
-                                            "J. lagostoma",
-                                            "E. ridleyana",
-                                            "T. atlantica",
-                                            "R. rattus"))]
+  finalDT[, species := factor(species, levels = c("J. lagostoma",
+                                                  "S. dactylatra",
+                                                  "E. ridleyana", 
+                                                  "T. atlantica",
+                                                  "R. rattus"))]
   scales_y <- list(
     "E. ridleyana" = scale_y_continuous(limits = c(-1, 1), breaks = seq(-1, 1, 0.4)),
     "J. lagostoma" = scale_y_continuous(limits = c(-1, 1), breaks = seq(-1, 1, 0.4)),
@@ -89,3 +89,5 @@ plotPopulationGrowth <- function(wildlifeDataset, ratsDataset,
   ggsave(device = "png", filename = nm, 
          width = 6, height = 10)
 }
+subDT <- finalDT[species == "S. dactylatra", ]
+summary(lm(estimate ~ cycle, data = subDT))
