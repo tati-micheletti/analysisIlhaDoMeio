@@ -100,5 +100,4 @@ plotPopulationGrowth <- function(wildlifeDataset, ratsDataset,
   qs::qsave(finalOBJ, file = "outputs/linearModelsAndPlot.qs")
   return(finalOBJ)
 }
-subDT <- finalDT[species == "S. dactylatra", ]
-summary(lm(estimate ~ cycle, data = subDT))
+

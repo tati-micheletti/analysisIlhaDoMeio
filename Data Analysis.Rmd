@@ -225,8 +225,9 @@ maskedBoobyRataDT <- calculatePopulationChange(species = "Sula dactylatra",
 
 ```
 
-We then joined all species tables into one and calculate, for each species, the differential 
-population growth index to be plotted.
+We then joined all species tables into one to later calculate, for each species, the differential 
+population growth index to be plotted. As several parameters are shared across sites, we simplify 
+the table by eliminating the redundant values.
 
 ```{r popChangeTable}
 finalTableName <- file.path("outputs/finalTable.csv")
@@ -240,10 +241,56 @@ if (!file.exists(finalTableName)){
    crabRataDT,
    maskedBoobyMeioDT,
    maskedBoobyRataDT), use.names = TRUE)
+finalTable <- unique(finalTable)
   write.csv(tb, finalTableName)
 } else {
   finalTable <- data.table::fread(finalTableName)
 }
+finalTable[, c("V1", "site") := NULL]
+finalTable <- unique(finalTable)
+# write.csv(finalTable, finalTableName) # For completeness. This is the table saved.
+```
+
+We then create Table 5, by concatenating the estimates values and confidence intervals.
+
+```{r Table5}
+# For each species and island and cycle, I need to average the estimates for each
+# parameter, and make a string next to it in the form of "XX (XX - XX)"
+table5 <- rbindlist(lapply(unique(finalTable[["species"]]), function(sp) {
+  table5.isl <- rbindlist(lapply(unique(finalTable[["island"]]), function(isla) {
+    table5.cyc <- rbindlist(lapply(unique(finalTable[["cycle"]]), function(cyc) {
+      table5.par <- rbindlist(lapply(unique(finalTable[["parameter"]]), function(parm) {
+        subt <- finalTable[species == sp &
+                             island == isla &
+                             cycle == cyc &
+                             parameter == parm, ]
+        m <- mean(subt[["estimate"]], na.rm = TRUE)
+        mi <- min(subt[["LCI"]], na.rm = TRUE)
+        ma <- max(subt[["UCI"]], na.rm = TRUE)
+        esti <- if (any(is.infinite(m), is.nan(m))) NA else paste0(round(m, 3), 
+                                              " (",
+                                              round(mi, 3),
+                                              " - ", 
+                                              round(ma, 3), 
+                                              ")")
+        newTb <- data.table(parameter = parm,
+                            estimate = esti)
+      }))
+      table5.par[, c("species", "island", "cycle") := list(sp, isla, cyc)]
+      tabDC <- dcast(table5.par, species + island + cycle ~ parameter, value.var = "estimate")
+      }))
+  }))
+}))
+table5_Final <- table5[!with(table5,is.na(detectionProbability)),] # Removing rows without data
+table5_Final[, species := factor(species, levels = c("Trachylepis atlantica",
+                                                        "Johngarthia lagostoma",
+                                                        "Elaenia ridleyana",
+                                                        "Sula dactylatra"))]
+table5_Final[, island := factor(island, levels = c("Ilha do Meio",
+                                                   "Ilha Rata"))]
+setkey(table5_Final, species, island, cycle)
+# Set key on species and cycles
+# write.csv(table5_Final, "outputs/table5.csv") # Writing the table5.csv file
 ```
 
 For completeness, we also provide all model formulation's tested for all species and their parameter 
