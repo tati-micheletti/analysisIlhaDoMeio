@@ -1,6 +1,6 @@
 ---
 title: "Swiftly squeaky clean: real-time active adaptive management eradicates rat overpopulation and brings immediate benefits to tropical island biodiversity"
-author: "Anonymus Anonymus"
+author: "Tati Micheletti"
 date: "10/10/2024"
 output: html_document
 ---
