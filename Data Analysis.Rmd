@@ -1,7 +1,7 @@
 ---
 title: "Swiftly squeaky clean: real-time active adaptive management eradicates rat overpopulation and brings immediate benefits to tropical island biodiversity"
-author: "Tati Micheletti"
-date: "09/23/2024"
+author: "Anonymus Anonymus"
+date: "10/10/2024"
 output: html_document
 ---
 
@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-This document describes the data analysis done for the paper *Swiftly squeaky clean: real-time adaptive management eradicates rat overpopulation and brings immediate benefits to tropical island biodiversity*.  
+This document describes the data analysis done for the paper *Swiftly squeaky clean: real-time active adaptive management eradicates rat overpopulation and brings immediate benefits to tropical island biodiversity*.  
 
 ## Load Libraries, source functions and set data directory
 
@@ -61,27 +61,27 @@ weatherData <- loadWeatherData(dataLocation = file.path(wd, "weatherData.csv"))
 ```
 
 
-## Mabuia  
+## Mabuya  
 
-We started our analysis with the Mabuia (Noronha Skink; *Trachylepis atlantica*).   
+We started our analysis with the Mabuya (Noronha Skink; *Trachylepis atlantica*).   
 
-For the mabuia, Negative Binomial Models would have been appropriate, as these model count data, 
+For the mabuya, Negative Binomial Models would have been appropriate, as these model count data, 
 especially if there is variability in the underlying rate of events. However, these are better 
-suited for overdispersed data, which ours isn't. Mabuia data is, however, zero inflated. 
+suited for overdispersed data, which ours isn't. Mabuya data is, however, zero inflated. 
 So ZIP models are more appropriate to use (see Kery, 
-2018 and Stoklosa et al. 2022). Moreover, the mabuia population is closed to immigration, considering 
+2018 and Stoklosa et al. 2022). Moreover, the mabuya population is closed to immigration, considering 
 the island is not close enough to others to allow for the species to immigrate. As the predation rate 
-by rats is high, we consider every sampling occasion as primary (i.e., open population). As we are 
+by rats is likely very high, we consider every sampling occasion as primary (i.e., open population). As we are 
 mainly interested in observing the effect of eradication on population growth rate, we added a covariate 
 for the time since the start of the eradication (TSE) for the model on Ilha do Meio, which could 
-influence population growth (i.e., gamma). Mabuia observation was performed by three different 
-researchers on both islands, and therefore, we also added researcherID as a covariate for detection. 
+influence population growth (i.e., gamma). Mabuya observation was performed by three different 
+researchers on both islands, and therefore, we also added observerID as a covariate for detection. 
 Lastly, we also added the possibility of landscape cover influencing the initial population size 
 (i.e., lambda), as the number of individuals tends to be higher on densily vegetated areas (i.e., 
 more space due to verticalization) than on open areas.  
 
-```{r mabuiaMeio}
-mabuiaMeio <- modelWildlife(DT = Data, 
+```{r mabuyaMeio}
+mabuyaMeio <- modelWildlife(DT = Data, 
                             island = "Ilha do Meio",
                             species = "Trachylepis atlantica",
                             weatherData = weatherData)
@@ -90,42 +90,44 @@ mabuiaMeio <- modelWildlife(DT = Data,
 
 The best wildlife model for each species and island (i.e., Ilha Rata as Control, Ilha do Meio as Treatment) 
 was then chosen based on Akaike Information Criterion (AIC). From the chosen model, 
-a table was built showing species, island, cycle (matching Table XX), site, land cover type, parameter, 
+a table was built showing species, island, cycle, site, land cover type, parameter, 
 estimate, standard error, lower confidence interval (LCI), upper 
-confidence interval (UCI), model mixture, model formulation, AIC, K, and total model run time.
+confidence interval (UCI), model mixture, model formulation, AIC and K (matching Appendix E).
 
-```{r mabuiaMeio2}
-mabuiaMeioDT <- calculatePopulationChange(species = "Trachylepis atlantica",
+```{r mabuyaMeio2}
+mabuyaMeioDT <- calculatePopulationChange(species = "Trachylepis atlantica",
                                           island = "Ilha do Meio",
-                                          shortName = "Mabuia_Meio_")
+                                          shortName = "Mabuya_Meio_")
 ```
 
-We then did the same for the mabuia on Ilha Rata:    
+We then did the same for the mabuya on Ilha Rata:    
 
-```{r mabuiaRata}
-mabuiaRata <- modelWildlife(DT = Data, island = "Ilha Rata",
+```{r mabuyaRata}
+mabuyaRata <- modelWildlife(DT = Data, island = "Ilha Rata",
                             species = "Trachylepis atlantica",
                             weatherData = weatherData)
 
-mabuiaRataDT <- calculatePopulationChange(species = "Trachylepis atlantica",
+mabuyaRataDT <- calculatePopulationChange(species = "Trachylepis atlantica",
                                           island = "Ilha Rata",
-                                          shortName = "Mabuia_Rata_")
+                                          shortName = "Mabuya_Rata_")
 ```
 
 ## Elenia  
 
-Next, we will continue our analysis with the Cucuruta (Noronha Elaenia; *Elaenia ridleyana*).  
-The observation from Elaenias also rendered data with zero inflation. Therefore, 
-we used a ZIP model. Our model also considers movement (iota) between the islands to be absent. 
+Next, we will continue our analysis with the Noronha Elaenia (Cucuruta; *Elaenia ridleyana*).  
+The observation from Elaenias also rendered data with zero inflation for Ilha do Meio. Therefore, 
+we used a ZIP model. Data from Ilha Rata, however was not zero inflated, so the model of choice 
+had a Poisson distribution. Our models also considers movement (iota) between the islands to be absent. 
 Although there is evidence of a single individual flying from the archipelago to the Atol das Rocas,
 approximately 145km away, the species has been observed in only 3 of the 26 islands and islets of 
-Noronha. For this species, we used a robust design as we performed temporal replicates on the same 
+Noronha, supporting lack of functional immigration. For this species, we used a robust design as 
+we performed temporal replicates on the same 
 day, considering a closed population within primary sampling occasions (sampling period within the 
 same day), and open between primary sampling occasions (more than a day 
 apart). Being an insectivore, we added the total amount of rainfall in the three months previous to 
 the count as a covariate that could influence population growth, apart from TSE for Ilha do Meio. 
-As the species was only observed in forest fragments and only by one researcher, neither landscape 
-cover nor observerID were added as covariates. First we ran the models for Ilha do Meio:
+As the species was only observed in forest fragments and only by a single researcher, neither landscape 
+cover or observerID were added as covariates. First we ran the models for Ilha do Meio:
 
 ```{r elaeniaMeio}
 elaeniaMeio <- modelWildlife(DT = Data, island = "Ilha do Meio",
@@ -162,16 +164,17 @@ cycle) seem to be preferred. In the same way, peak periods of rain (i.e., March
 or April) also seem to be important factors for this species' movement. Therefore, we 
 added the moon phase and total rainfall in the three previous months as covariates influencing 
 population growth and observation, apart from apart from TSE for Ilha do Meio. Crab data is also 
-zero inflated, so we tested both ZIP and NB models. Similarly to Mabuia, although 
+zero inflated, so we tested both ZIP and NB models. Similarly to Mabuya, although 
 the NB model presented a smaller AIC, the dispersion parameter was not significant, 
 while the zero inflation was in the ZIP model. Therefore, we opted for a ZIP model. It is important 
-to notice that a four models for this species on Ilha do Meio did not converge throwing the error 
+to notice that four models for this species on Ilha do Meio did not converge throwing the error 
 `Hessian is singular.`. All of these models had landscape cover as a covariate for lambda and 
 TSE as covariate for gamma. This warning generally happens when parameters are non-identifiable and  
 can be usually resolved by either simplifying the model, or providing good starting values. 
 Even after trying to provide starting values for the models, however, these still did not converge. 
 This suggests the model formulation cannot capture the signal correctly and the estimates are likely 
-unreliable. These are, however, still reported in Table X with a footnote.
+unreliable. There were, however, not the best models. These are reported in Appendix B 
+and can be identified by the NA replacing the deviation values of estimates.
 
 ```{r crabMeio}
 crabMeio <- modelWildlife(DT = Data, island = "Ilha do Meio", 
@@ -197,12 +200,12 @@ crabRataDT <- calculatePopulationChange(species = "Johngarthia lagostoma",
 
 ## Masked Booby
 
-To perform the analysis for a seabird species, the Atoba Mascarado (masked booby; 
+To perform the analysis for a seabird species, the masked booby (Atoba Mascarado; 
 *Sula dactylatra*), surveys were performed in all breeding sites across the Ilha 
 do Meio (n = 7), and on the only breeding site on Ilha Rata. We used adult counts 
-as a proxy for breeding site quality. As this species does not permanently stay on the island, we 
-included immigation and modelled it in function of TSE, in the same way for gamma for the Ilha do 
-Meio. The only model ran for Ilha Rata was the constant one.
+as a proxy for breeding site quality. Even though this species does not permanently 
+stay on the island, we did not includ immigation due to site fidelity. 
+The only model ran for Ilha Rata was the constant one.
 
 ```{r crabMeio}
 maskedBoobyMeio <- modelWildlife(DT = Data, island = "Ilha do Meio",
@@ -227,14 +230,14 @@ maskedBoobyRataDT <- calculatePopulationChange(species = "Sula dactylatra",
 
 We then joined all species tables into one to later calculate, for each species, the differential 
 population growth index to be plotted. As several parameters are shared across sites, we simplify 
-the table by eliminating the redundant values.
+the table by eliminating the redundant values. [This is the table found in Appendix E].
 
 ```{r popChangeTable}
 finalTableName <- file.path("outputs/finalTable.csv")
 if (!file.exists(finalTableName)){
  finalTable <- rbindlist(list(
-   mabuiaMeioDT,
-   mabuiaRataDT,
+   mabuyaMeioDT,
+   mabuyaRataDT,
    elaeniaMeioDT,
    elaeniaRataDT,
    crabMeioDT,
@@ -251,15 +254,16 @@ finalTable <- unique(finalTable)
 # write.csv(finalTable, finalTableName) # For completeness. This is the table saved.
 ```
 
-We then create Table 5, by concatenating the estimates values and confidence intervals.
+We then create Table 6, by concatenating the estimates values and confidence intervals.
+[This is the table found in the main manuscript, Table 6]
 
-```{r Table5}
+```{r table6}
 # For each species and island and cycle, I need to average the estimates for each
 # parameter, and make a string next to it in the form of "XX (XX - XX)"
-table5 <- rbindlist(lapply(unique(finalTable[["species"]]), function(sp) {
-  table5.isl <- rbindlist(lapply(unique(finalTable[["island"]]), function(isla) {
-    table5.cyc <- rbindlist(lapply(unique(finalTable[["cycle"]]), function(cyc) {
-      table5.par <- rbindlist(lapply(unique(finalTable[["parameter"]]), function(parm) {
+table6 <- rbindlist(lapply(unique(finalTable[["species"]]), function(sp) {
+  table6.isl <- rbindlist(lapply(unique(finalTable[["island"]]), function(isla) {
+    table6.cyc <- rbindlist(lapply(unique(finalTable[["cycle"]]), function(cyc) {
+      table6.par <- rbindlist(lapply(unique(finalTable[["parameter"]]), function(parm) {
         subt <- finalTable[species == sp &
                              island == isla &
                              cycle == cyc &
@@ -276,25 +280,26 @@ table5 <- rbindlist(lapply(unique(finalTable[["species"]]), function(sp) {
         newTb <- data.table(parameter = parm,
                             estimate = esti)
       }))
-      table5.par[, c("species", "island", "cycle") := list(sp, isla, cyc)]
-      tabDC <- dcast(table5.par, species + island + cycle ~ parameter, value.var = "estimate")
+      table6.par[, c("species", "island", "cycle") := list(sp, isla, cyc)]
+      tabDC <- dcast(table6.par, species + island + cycle ~ parameter, value.var = "estimate")
       }))
   }))
 }))
-table5_Final <- table5[!with(table5,is.na(detectionProbability)),] # Removing rows without data
-table5_Final[, species := factor(species, levels = c("Trachylepis atlantica",
+table6_Final <- table6[!with(table6,is.na(detectionProbability)),] # Removing rows without data
+table6_Final[, species := factor(species, levels = c("Trachylepis atlantica",
                                                         "Johngarthia lagostoma",
                                                         "Elaenia ridleyana",
                                                         "Sula dactylatra"))]
-table5_Final[, island := factor(island, levels = c("Ilha do Meio",
+table6_Final[, island := factor(island, levels = c("Ilha do Meio",
                                                    "Ilha Rata"))]
-setkey(table5_Final, species, island, cycle)
+setkey(table6_Final, species, island, cycle)
 # Set key on species and cycles
-# write.csv(table5_Final, "outputs/table5.csv") # Writing the table5.csv file
+# write.csv(table6_Final, "outputs/table6.csv") # Writing the table6.csv file
+# NOTE: In previous versions, this was identified as table5.csv! 
 ```
 
 For completeness, we also provide all model formulation's tested for all species and their parameter 
-estimates on Appendix . 
+estimates on Appendix B. 
 
 ```{r allModelsTable}
 
@@ -302,7 +307,8 @@ fullModTable <- createFullModelTable(finalTable = finalTable)
 
 ```
 
-For the manuscript, a table with the best models has also been created:
+For the manuscript, a table with the best models has also been created (Table 5 
+in the main document):
 
 ```{r bestModTable}
 
@@ -340,15 +346,14 @@ aims to isolate the specific factors influencing population growth on Ilha do Me
 regional drivers that could affect population growth uniformly across both islands. This adjustment 
 helps to eliminate the influence of broader regional factors like extreme events and natural 
 population variation cycles, allowing for a more focused analysis of the drivers specific to 
-Ilha do Meio. We then plotted the results of all species (i.e., black rat density, and Differential 
-Population Growth Index of mabuias, crabs, elaenia and masked booby) in the same plot, Figure X.  
+Ilha do Meio.  
 
 At last, we build a plot to show the difference in growth rate through time in function 
 of time since eradication (TSE) using the control to control for seasonality. We use growth 
 rate instead of other parameters (i.e., population density) due to the compounded uncertainty 
 in the last due to both uncertainty in initial population and population growth rate.  
 Moreover, growth rate shows exactly what we sought with the current work, the population trend 
-through time.
+through time [Figure 4 on the manuscript].
 
 ```{r plotPopGrowth}
 plotGrowth <- plotPopulationGrowth(wildlifeDataset = finalTable, 
