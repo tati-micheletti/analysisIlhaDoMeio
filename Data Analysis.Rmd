@@ -45,7 +45,7 @@ wd <- file.path(getwd(), "data")
 
 After loading libraries and sourcing needed functions, we load the data and 
 format the information we need for the models. The 
-`finalDataCOUNTS.csv` file contains all data for the endangered species. For all species, 
+`countData.csv` file contains all data for the endangered species. For all species, 
 we used the N-mixture model described by Dail and Madsen (2011), which has been 
 incorporated into the R package `unmarked`. This model, ran using the function 
 `pcountOpen()`, allows for model formulations to identify population trends, 
@@ -53,7 +53,8 @@ with or without immigration, and for covariates on initial population (described
 as lambda in the model), population growth (gamma), observation probabilities 
 (p) and immigration (iota), when this is considered. This model was chosen as it
 could be used for all species, as it also allows for different distributions 
-(i.e., Poisson, Negative Binomial and Zero Inflated). 
+(i.e., Poisson, Negative Binomial and Zero Inflated). The file `weatherData.csv` 
+has information on moon cycle and rainfall.
 
 ```{r loadAndCheckData}
 Data <- loadData(dataLocation = file.path(wd, "countData.csv"))
